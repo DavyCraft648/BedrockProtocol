@@ -389,4 +389,12 @@ interface PacketHandlerInterface{
 	public function handleEditorNetwork(EditorNetworkPacket $packet) : bool;
 
 	public function handleFeatureRegistry(FeatureRegistryPacket $packet) : bool;
+
+	public function handleServerStats(ServerStatsPacket $packet) : bool;
+
+	public function handleRequestNetworkSettings(RequestNetworkSettingsPacket $packet) : bool;
+
+	public function handleGameTestRequest(GameTestRequestPacket $packet) : bool;
+
+	public function handleGameTestResults(GameTestResultsPacket $packet) : bool;
 }

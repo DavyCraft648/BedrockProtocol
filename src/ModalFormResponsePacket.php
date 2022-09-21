@@ -52,7 +52,7 @@ class ModalFormResponsePacket extends DataPacket implements ServerboundPacket{
 		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_20){
 			$this->formData = $in->readOptional(\Closure::fromCallable([$in, 'getString']));
 			$this->cancelReason = $in->readOptional(\Closure::fromCallable([$in, 'getByte']));
-		} else {
+		}else{
 			$this->formData = $in->getString();
 			$this->cancelReason = null;
 		}
