@@ -29,7 +29,8 @@ final class ItemStackRequest{
 	public function __construct(
 		private int $requestId,
 		private array $actions,
-		private array $filterStrings
+		private array $filterStrings,
+		private int $filterStringCause
 	){}
 
 	public function getRequestId() : int{ return $this->requestId; }
@@ -42,6 +43,8 @@ final class ItemStackRequest{
 	 * @phpstan-return list<string>
 	 */
 	public function getFilterStrings() : array{ return $this->filterStrings; }
+
+	public function getFilterStringCause() : int{ return $this->filterStringCause; }
 
 	/**
 	 * @throws BinaryDataException
@@ -87,7 +90,12 @@ final class ItemStackRequest{
 		for($i = 0, $len = $in->getUnsignedVarInt(); $i < $len; ++$i){
 			$filterStrings[] = $in->getString();
 		}
-		return new self($requestId, $actions, $filterStrings);
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_50){
+			$filterStringCause = $in->getLInt();
+		}else{
+			$filterStringCause = 0;
+		}
+		return new self($requestId, $actions, $filterStrings, $filterStringCause);
 	}
 
 	public function write(PacketSerializer $out) : void{
@@ -104,6 +112,9 @@ final class ItemStackRequest{
 		$out->putUnsignedVarInt(count($this->filterStrings));
 		foreach($this->filterStrings as $string){
 			$out->putString($string);
+		}
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_50){
+			$out->putLInt($this->filterStringCause);
 		}
 	}
 }
