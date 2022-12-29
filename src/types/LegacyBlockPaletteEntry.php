@@ -12,23 +12,18 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\protocol\types\inventory;
+namespace pocketmine\network\mcpe\protocol\types;
 
-final class ContainerIds{
+final class LegacyBlockPaletteEntry{
+	public function __construct(
+		private string $name,
+		private int $id,
+		private int $metadata,
+	){}
 
-	private function __construct(){
-		//NOOP
-	}
+	public function getName() : string{ return $this->name; }
 
-	public const NONE = -1;
-	public const INVENTORY = 0;
-	public const FIRST = 1;
-	public const LAST = 100;
-	public const OFFHAND = 119;
-	public const ARMOR = 120;
-	public const CREATIVE = 121;
-	public const HOTBAR = 122;
-	public const FIXED_INVENTORY = 123;
-	public const UI = 124;
+	public function getId() : int{ return $this->id; }
 
+	public function getMetadata() : int{ return $this->metadata; }
 }

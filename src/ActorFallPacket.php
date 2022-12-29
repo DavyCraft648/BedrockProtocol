@@ -15,46 +15,44 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\protocol;
 
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
-use pocketmine\network\mcpe\protocol\types\entity\Attribute;
-use function array_values;
 
-class UpdateAttributesPacket extends DataPacket implements ClientboundPacket{
-	public const NETWORK_ID = ProtocolInfo::UPDATE_ATTRIBUTES_PACKET;
+class ActorFallPacket extends DataPacket implements ServerboundPacket{
+	public const NETWORK_ID = ProtocolInfo::ACTOR_FALL_PACKET;
 
-	public int $actorRuntimeId;
-	/** @var Attribute[] */
-	public array $entries = [];
-	public int $tick = 0;
+	private int $actorRuntimeId;
+	private float $fallDistance;
+	private bool $inVoid;
 
 	/**
 	 * @generate-create-func
-	 * @param Attribute[] $entries
 	 */
-	public static function create(int $actorRuntimeId, array $entries, int $tick) : self{
+	public static function create(int $actorRuntimeId, float $fallDistance, bool $inVoid) : self{
 		$result = new self;
 		$result->actorRuntimeId = $actorRuntimeId;
-		$result->entries = $entries;
-		$result->tick = $tick;
+		$result->fallDistance = $fallDistance;
+		$result->inVoid = $inVoid;
 		return $result;
 	}
 
+	public function getActorRuntimeId() : int{ return $this->actorRuntimeId; }
+
+	public function getFallDistance() : float{ return $this->fallDistance; }
+
+	public function isInVoid() : bool{ return $this->inVoid; }
+
 	protected function decodePayload(PacketSerializer $in) : void{
 		$this->actorRuntimeId = $in->getActorRuntimeId();
-		$this->entries = $in->getAttributeList();
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-			$this->tick = $in->getUnsignedVarLong();
-		}
+		$this->fallDistance = $in->getLFloat();
+		$this->inVoid = $in->getBool();
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
 		$out->putActorRuntimeId($this->actorRuntimeId);
-		$out->putAttributeList(...array_values($this->entries));
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-			$out->putUnsignedVarLong($this->tick);
-		}
+		$out->putLFloat($this->fallDistance);
+		$out->putBool($this->inVoid);
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{
-		return $handler->handleUpdateAttributes($this);
+		return $handler->handleActorFall($this);
 	}
 }

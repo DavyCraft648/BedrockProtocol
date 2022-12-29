@@ -23,6 +23,7 @@ class NetworkInventoryAction{
 
 	public const SOURCE_WORLD = 2; //drop/pickup item entity
 	public const SOURCE_CREATIVE = 3;
+	public const SOURCE_CRAFT_SLOT = 100;
 	public const SOURCE_TODO = 99999;
 
 	/**
@@ -61,6 +62,7 @@ class NetworkInventoryAction{
 	public int $inventorySlot;
 	public ItemStackWrapper $oldItem;
 	public ItemStackWrapper $newItem;
+	public int $newItemStackId;
 
 	/**
 	 * @return $this
@@ -68,7 +70,7 @@ class NetworkInventoryAction{
 	 * @throws BinaryDataException
 	 * @throws PacketDecodeException
 	 */
-	public function read(PacketSerializer $packet) : NetworkInventoryAction{
+	public function read(PacketSerializer $packet, bool $hasItemStackIds = false) : NetworkInventoryAction{
 		$this->sourceType = $packet->getUnsignedVarInt();
 
 		switch($this->sourceType){
@@ -80,6 +82,7 @@ class NetworkInventoryAction{
 				break;
 			case self::SOURCE_CREATIVE:
 				break;
+			case self::SOURCE_CRAFT_SLOT:
 			case self::SOURCE_TODO:
 				$this->windowId = $packet->getVarInt();
 				break;
@@ -90,6 +93,9 @@ class NetworkInventoryAction{
 		$this->inventorySlot = $packet->getUnsignedVarInt();
 		$this->oldItem = ItemStackWrapper::read($packet);
 		$this->newItem = ItemStackWrapper::read($packet);
+		if($hasItemStackIds) {
+			$this->newItemStackId = $packet->readGenericTypeNetworkId();
+		}
 
 		return $this;
 	}
@@ -97,7 +103,7 @@ class NetworkInventoryAction{
 	/**
 	 * @throws \InvalidArgumentException
 	 */
-	public function write(PacketSerializer $packet) : void{
+	public function write(PacketSerializer $packet, bool $hasItemStackIds = false) : void{
 		$packet->putUnsignedVarInt($this->sourceType);
 
 		switch($this->sourceType){
@@ -109,6 +115,7 @@ class NetworkInventoryAction{
 				break;
 			case self::SOURCE_CREATIVE:
 				break;
+			case self::SOURCE_CRAFT_SLOT:
 			case self::SOURCE_TODO:
 				$packet->putVarInt($this->windowId);
 				break;
@@ -120,5 +127,8 @@ class NetworkInventoryAction{
 		$packet->putUnsignedVarInt($this->inventorySlot);
 		$this->oldItem->write($packet);
 		$this->newItem->write($packet);
+		if($hasItemStackIds){
+			$packet->writeGenericTypeNetworkId($this->newItemStackId);
+		}
 	}
 }

@@ -57,8 +57,14 @@ class ResourcePackStackPacket extends DataPacket implements ClientboundPacket{
 			$this->resourcePackStack[] = ResourcePackStackEntry::read($in);
 		}
 
+		if($in->getProtocolId() < ProtocolInfo::PROTOCOL_1_16_100) {
+			$in->getBool(); // isExperimental
+		}
+
 		$this->baseGameVersion = $in->getString();
-		$this->experiments = Experiments::read($in);
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
+			$this->experiments = Experiments::read($in);
+		}
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
@@ -74,8 +80,14 @@ class ResourcePackStackPacket extends DataPacket implements ClientboundPacket{
 			$entry->write($out);
 		}
 
+		if($out->getProtocolId() < ProtocolInfo::PROTOCOL_1_16_100) {
+			$out->putBool(count($this->experiments->getExperiments()) > 0);
+		}
+
 		$out->putString($this->baseGameVersion);
-		$this->experiments->write($out);
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
+			$this->experiments->write($out);
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{
