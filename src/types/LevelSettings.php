@@ -94,11 +94,7 @@ final class LevelSettings{
 		}else{
 			$this->seed = $in->getVarInt();
 		}
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->spawnSettings = SpawnSettings::read($in);
-		}else{
-			$this->spawnSettings = new SpawnSettings(SpawnSettings::BIOME_TYPE_DEFAULT, "plains", $in->getVarInt());
-		}
+		$this->spawnSettings = SpawnSettings::read($in);
 		$this->generator = $in->getVarInt();
 		$this->worldGamemode = $in->getVarInt();
 		$this->difficulty = $in->getVarInt();
@@ -110,9 +106,7 @@ final class LevelSettings{
 		$this->time = $in->getVarInt();
 		$this->eduEditionOffer = $in->getVarInt();
 		$this->hasEduFeaturesEnabled = $in->getBool();
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->eduProductUUID = $in->getString();
-		}
+		$this->eduProductUUID = $in->getString();
 		$this->rainLevel = $in->getLFloat();
 		$this->lightningLevel = $in->getLFloat();
 		$this->hasConfirmedPlatformLockedContent = $in->getBool();
@@ -123,9 +117,7 @@ final class LevelSettings{
 		$this->commandsEnabled = $in->getBool();
 		$this->isTexturePacksRequired = $in->getBool();
 		$this->gameRules = $in->getGameRules();
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-			$this->experiments = Experiments::read($in);
-		}
+		$this->experiments = Experiments::read($in);
 		$this->hasBonusChestEnabled = $in->getBool();
 		$this->hasStartWithMapEnabled = $in->getBool();
 		$this->defaultPlayerPermission = $in->getVarInt();
@@ -141,21 +133,17 @@ final class LevelSettings{
 			$this->disablePersona = $in->getBool();
 			$this->disableCustomSkins = $in->getBool();
 		}
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0){
-			$this->vanillaVersion = $in->getString();
+		$this->vanillaVersion = $in->getString();
+		$this->limitedWorldWidth = $in->getLInt();
+		$this->limitedWorldLength = $in->getLInt();
+		$this->isNewNether = $in->getBool();
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
+			$this->eduSharedUriResource = EducationUriResource::read($in);
 		}
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->limitedWorldWidth = $in->getLInt();
-			$this->limitedWorldLength = $in->getLInt();
-			$this->isNewNether = $in->getBool();
-			if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
-				$this->eduSharedUriResource = EducationUriResource::read($in);
-			}
-			$this->experimentalGameplayOverride = $in->readOptional(\Closure::fromCallable([$in, 'getBool']));
-			if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_20){
-				$this->chatRestrictionLevel = $in->getByte();
-				$this->disablePlayerInteractions = $in->getBool();
-			}
+		$this->experimentalGameplayOverride = $in->readOptional(\Closure::fromCallable([$in, 'getBool']));
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_20){
+			$this->chatRestrictionLevel = $in->getByte();
+			$this->disablePlayerInteractions = $in->getBool();
 		}
 	}
 
@@ -165,11 +153,7 @@ final class LevelSettings{
 		}else{
 			$out->putVarInt($this->seed);
 		}
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->spawnSettings->write($out);
-		}else{
-			$out->putVarInt($this->spawnSettings->getDimension());
-		}
+		$this->spawnSettings->write($out);
 		$out->putVarInt($this->generator);
 		$out->putVarInt($this->worldGamemode);
 		$out->putVarInt($this->difficulty);
@@ -181,9 +165,7 @@ final class LevelSettings{
 		$out->putVarInt($this->time);
 		$out->putVarInt($this->eduEditionOffer);
 		$out->putBool($this->hasEduFeaturesEnabled);
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$out->putString($this->eduProductUUID);
-		}
+		$out->putString($this->eduProductUUID);
 		$out->putLFloat($this->rainLevel);
 		$out->putLFloat($this->lightningLevel);
 		$out->putBool($this->hasConfirmedPlatformLockedContent);
@@ -194,9 +176,7 @@ final class LevelSettings{
 		$out->putBool($this->commandsEnabled);
 		$out->putBool($this->isTexturePacksRequired);
 		$out->putGameRules($this->gameRules);
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-			$this->experiments->write($out);
-		}
+		$this->experiments->write($out);
 		$out->putBool($this->hasBonusChestEnabled);
 		$out->putBool($this->hasStartWithMapEnabled);
 		$out->putVarInt($this->defaultPlayerPermission);
@@ -212,21 +192,17 @@ final class LevelSettings{
 			$out->putBool($this->disablePersona);
 			$out->putBool($this->disableCustomSkins);
 		}
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0){
-			$out->putString($this->vanillaVersion);
+		$out->putString($this->vanillaVersion);
+		$out->putLInt($this->limitedWorldWidth);
+		$out->putLInt($this->limitedWorldLength);
+		$out->putBool($this->isNewNether);
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
+			($this->eduSharedUriResource ?? new EducationUriResource("", ""))->write($out);
 		}
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$out->putLInt($this->limitedWorldWidth);
-			$out->putLInt($this->limitedWorldLength);
-			$out->putBool($this->isNewNether);
-			if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
-				($this->eduSharedUriResource ?? new EducationUriResource("", ""))->write($out);
-			}
-			$out->writeOptional($this->experimentalGameplayOverride, \Closure::fromCallable([$out, 'putBool']));
-			if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_20){
-				$out->putByte($this->chatRestrictionLevel);
-				$out->putBool($this->disablePlayerInteractions);
-			}
+		$out->writeOptional($this->experimentalGameplayOverride, \Closure::fromCallable([$out, 'putBool']));
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_20){
+			$out->putByte($this->chatRestrictionLevel);
+			$out->putBool($this->disablePlayerInteractions);
 		}
 	}
 }

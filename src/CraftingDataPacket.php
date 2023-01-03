@@ -80,18 +80,12 @@ class CraftingDataPacket extends DataPacket implements ClientboundPacket{
 		}
 		for($i = 0, $count = $in->getUnsignedVarInt(); $i < $count; ++$i){
 			$inputId = $in->getVarInt();
-			if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-				$inputMeta = $in->getVarInt();
-			}
+			$inputMeta = $in->getVarInt();
 			$ingredientId = $in->getVarInt();
-			if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-				$ingredientMeta = $in->getVarInt();
-			}
+			$ingredientMeta = $in->getVarInt();
 			$outputId = $in->getVarInt();
-			if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-				$outputMeta = $in->getVarInt();
-			}
-			$this->potionTypeRecipes[] = new PotionTypeRecipe($inputId, $inputMeta ?? 0, $ingredientId, $ingredientMeta ?? 0, $outputId, $outputMeta ?? 0);
+			$outputMeta = $in->getVarInt();
+			$this->potionTypeRecipes[] = new PotionTypeRecipe($inputId, $inputMeta, $ingredientId, $ingredientMeta, $outputId, $outputMeta);
 		}
 		for($i = 0, $count = $in->getUnsignedVarInt(); $i < $count; ++$i){
 			$input = $in->getVarInt();
@@ -124,17 +118,11 @@ class CraftingDataPacket extends DataPacket implements ClientboundPacket{
 		$out->putUnsignedVarInt(count($this->potionTypeRecipes));
 		foreach($this->potionTypeRecipes as $recipe){
 			$out->putVarInt($recipe->getInputItemId());
-			if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-				$out->putVarInt($recipe->getInputItemMeta());
-			}
+			$out->putVarInt($recipe->getInputItemMeta());
 			$out->putVarInt($recipe->getIngredientItemId());
-			if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-				$out->putVarInt($recipe->getIngredientItemMeta());
-			}
+			$out->putVarInt($recipe->getIngredientItemMeta());
 			$out->putVarInt($recipe->getOutputItemId());
-			if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-				$out->putVarInt($recipe->getOutputItemMeta());
-			}
+			$out->putVarInt($recipe->getOutputItemMeta());
 		}
 		$out->putUnsignedVarInt(count($this->potionContainerRecipes));
 		foreach($this->potionContainerRecipes as $recipe){

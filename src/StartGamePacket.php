@@ -16,14 +16,10 @@ namespace pocketmine\network\mcpe\protocol;
 
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\nbt\tag\ListTag;
-use pocketmine\nbt\TreeRoot;
-use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\types\BlockPaletteEntry;
 use pocketmine\network\mcpe\protocol\types\CacheableNbt;
 use pocketmine\network\mcpe\protocol\types\ItemTypeEntry;
-use pocketmine\network\mcpe\protocol\types\LegacyBlockPaletteEntry;
 use pocketmine\network\mcpe\protocol\types\LevelSettings;
 use pocketmine\network\mcpe\protocol\types\PlayerMovementSettings;
 use Ramsey\Uuid\UuidInterface;
@@ -64,11 +60,6 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 	 * @phpstan-var list<BlockPaletteEntry>
 	 */
 	public array $blockPalette = [];
-	/**
-	 * @var LegacyBlockPaletteEntry[]
-	 * @phpstan-var list<LegacyBlockPaletteEntry>
-	 */
-	public array $legacyBlockPalette = [];
 
 	/**
 	 * Checksum of the full block palette. This is a hash of some weird stringified version of the NBT.
@@ -85,13 +76,11 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 
 	/**
 	 * @generate-create-func
-	 * @param BlockPaletteEntry[]       $blockPalette
-	 * @param LegacyBlockPaletteEntry[] $legacyBlockPalette
-	 * @param ItemTypeEntry[]           $itemTable
-	 * @phpstan-param CacheableNbt<CompoundTag>     $playerActorProperties
-	 * @phpstan-param list<BlockPaletteEntry>       $blockPalette
-	 * @phpstan-param list<LegacyBlockPaletteEntry> $legacyBlockPalette
-	 * @phpstan-param list<ItemTypeEntry>           $itemTable
+	 * @param BlockPaletteEntry[] $blockPalette
+	 * @param ItemTypeEntry[]     $itemTable
+	 * @phpstan-param CacheableNbt<CompoundTag> $playerActorProperties
+	 * @phpstan-param list<BlockPaletteEntry>   $blockPalette
+	 * @phpstan-param list<ItemTypeEntry>       $itemTable
 	 */
 	public static function create(
 		int $actorUniqueId,
@@ -115,7 +104,6 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 		UuidInterface $worldTemplateId,
 		bool $enableClientSideChunkGeneration,
 		array $blockPalette,
-		array $legacyBlockPalette,
 		int $blockPaletteChecksum,
 		array $itemTable,
 	) : self{
@@ -141,7 +129,6 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 		$result->worldTemplateId = $worldTemplateId;
 		$result->enableClientSideChunkGeneration = $enableClientSideChunkGeneration;
 		$result->blockPalette = $blockPalette;
-		$result->legacyBlockPalette = $legacyBlockPalette;
 		$result->blockPaletteChecksum = $blockPaletteChecksum;
 		$result->itemTable = $itemTable;
 		return $result;
@@ -163,32 +150,29 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 		$this->worldName = $in->getString();
 		$this->premiumWorldTemplateId = $in->getString();
 		$this->isTrial = $in->getBool();
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0){
-			$this->playerMovementSettings = PlayerMovementSettings::read($in);
-		}
+		$this->playerMovementSettings = PlayerMovementSettings::read($in);
 		$this->currentTick = $in->getLLong();
 
 		$this->enchantmentSeed = $in->getVarInt();
 
 		$this->blockPalette = [];
-		$this->legacyBlockPalette = [];
-		$this->getEncodedBlockPalette($in);
+		for($i = 0, $len = $in->getUnsignedVarInt(); $i < $len; ++$i){
+			$blockName = $in->getString();
+			$state = $in->getNbtCompoundRoot();
+			$this->blockPalette[] = new BlockPaletteEntry($blockName, new CacheableNbt($state));
+		}
 
 		$this->itemTable = [];
 		for($i = 0, $count = $in->getUnsignedVarInt(); $i < $count; ++$i){
 			$stringId = $in->getString();
 			$numericId = $in->getSignedLShort();
-			if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-				$isComponentBased = $in->getBool();
-			}
+			$isComponentBased = $in->getBool();
 
-			$this->itemTable[] = new ItemTypeEntry($stringId, $numericId, $isComponentBased ?? false);
+			$this->itemTable[] = new ItemTypeEntry($stringId, $numericId, $isComponentBased);
 		}
 
 		$this->multiplayerCorrelationId = $in->getString();
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->enableNewInventorySystem = $in->getBool();
-		}
+		$this->enableNewInventorySystem = $in->getBool();
 		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_0){
 			$this->serverSoftwareVersion = $in->getString();
 		}
@@ -220,36 +204,26 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 		$out->putString($this->worldName);
 		$out->putString($this->premiumWorldTemplateId);
 		$out->putBool($this->isTrial);
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0){
-			$this->playerMovementSettings->write($out);
-		}
+		$this->playerMovementSettings->write($out);
 		$out->putLLong($this->currentTick);
 
 		$out->putVarInt($this->enchantmentSeed);
 
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-			$out->putUnsignedVarInt(count($this->blockPalette));
-			foreach($this->blockPalette as $entry){
-				$out->putString($entry->getName());
-				$out->put($entry->getStates()->getEncodedNbt());
-			}
-		}else{
-			$this->putEncodedBlockPalette($out);
+		$out->putUnsignedVarInt(count($this->blockPalette));
+		foreach($this->blockPalette as $entry){
+			$out->putString($entry->getName());
+			$out->put($entry->getStates()->getEncodedNbt());
 		}
 
 		$out->putUnsignedVarInt(count($this->itemTable));
 		foreach($this->itemTable as $entry){
 			$out->putString($entry->getStringId());
 			$out->putLShort($entry->getNumericId());
-			if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-				$out->putBool($entry->isComponentBased());
-			}
+			$out->putBool($entry->isComponentBased());
 		}
 
 		$out->putString($this->multiplayerCorrelationId);
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$out->putBool($this->enableNewInventorySystem);
-		}
+		$out->putBool($this->enableNewInventorySystem);
 		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_0){
 			$out->putString($this->serverSoftwareVersion);
 		}
@@ -262,61 +236,6 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 		}
 		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_20){
 			$out->putBool($this->enableClientSideChunkGeneration);
-		}
-	}
-
-	private function getEncodedBlockPalette(PacketSerializer $in) : void{
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0){
-			if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-				for($i = 0, $len = $in->getUnsignedVarInt(); $i < $len; ++$i){
-					$blockName = $in->getString();
-					$state = $in->getNbtCompoundRoot();
-					$this->blockPalette[] = new BlockPaletteEntry($blockName, new CacheableNbt($state));
-				}
-			}else{
-				$blockTable = $in->getNbtRoot()->getTag();
-				if(!($blockTable instanceof ListTag)){
-					throw new PacketDecodeException("Expected TAG_List NBT root");
-				}
-
-				foreach($blockTable->getValue() as $tag){
-					$state = $tag->getValue();
-					if(!($state instanceof CompoundTag)){
-						throw new PacketDecodeException("Expected TAG_Compound NBT state");
-					}
-
-					$blockName = $state->getCompoundTag("block");
-					if($blockName === null) {
-						throw new PacketDecodeException("Expected TAG_Compound NBT block");
-					}
-
-					$this->blockPalette[] = new BlockPaletteEntry($blockName->getString("name"), new CacheableNbt($state));
-				}
-			}
-		}else{
-			for($i = 0, $len = $in->getUnsignedVarInt(); $i < $len; ++$i){
-				$name = $in->getString();
-				$metadata = $in->getLShort();
-				$id = $in->getLShort();
-				$this->legacyBlockPalette[] = new LegacyBlockPaletteEntry($name, $id, $metadata);
-			}
-		}
-	}
-
-	private function putEncodedBlockPalette(PacketSerializer $out) : void{
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0){
-			$root = new ListTag();
-			foreach($this->blockPalette as $entry){
-				$root->push($entry->getStates()->getRoot());
-			}
-			$out->put((new NetworkNbtSerializer())->write(new TreeRoot($root)));
-		}else{
-			$out->putUnsignedVarInt(count($this->legacyBlockPalette));
-			foreach($this->legacyBlockPalette as $entry){
-				$out->putString($entry->getName());
-				$out->putLShort($entry->getMetadata());
-				$out->putLShort($entry->getId());
-			}
 		}
 	}
 

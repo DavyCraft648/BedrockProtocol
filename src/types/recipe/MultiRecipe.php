@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types\recipe;
 
-use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use Ramsey\Uuid\UuidInterface;
 
@@ -51,16 +50,12 @@ final class MultiRecipe extends RecipeWithTypeId{
 
 	public static function decode(int $typeId, PacketSerializer $in) : self{
 		$uuid = $in->getUUID();
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$recipeNetId = $in->readGenericTypeNetworkId();
-		}
-		return new self($typeId, $uuid, $recipeNetId ?? 0);
+		$recipeNetId = $in->readGenericTypeNetworkId();
+		return new self($typeId, $uuid, $recipeNetId);
 	}
 
 	public function encode(PacketSerializer $out) : void{
 		$out->putUUID($this->recipeId);
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$out->writeGenericTypeNetworkId($this->recipeNetId);
-		}
+		$out->writeGenericTypeNetworkId($this->recipeNetId);
 	}
 }

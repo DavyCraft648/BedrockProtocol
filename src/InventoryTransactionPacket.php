@@ -54,13 +54,11 @@ class InventoryTransactionPacket extends DataPacket implements ClientboundPacket
 	}
 
 	protected function decodePayload(PacketSerializer $in) : void{
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$this->requestId = $in->readGenericTypeNetworkId();
-			$this->requestChangedSlots = [];
-			if($this->requestId !== 0){
-				for($i = 0, $len = $in->getUnsignedVarInt(); $i < $len; ++$i){
-					$this->requestChangedSlots[] = InventoryTransactionChangedSlotsHack::read($in);
-				}
+		$this->requestId = $in->readGenericTypeNetworkId();
+		$this->requestChangedSlots = [];
+		if($this->requestId !== 0){
+			for($i = 0, $len = $in->getUnsignedVarInt(); $i < $len; ++$i){
+				$this->requestChangedSlots[] = InventoryTransactionChangedSlotsHack::read($in);
 			}
 		}
 
@@ -79,13 +77,11 @@ class InventoryTransactionPacket extends DataPacket implements ClientboundPacket
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_0){
-			$out->writeGenericTypeNetworkId($this->requestId);
-			if($this->requestId !== 0){
-				$out->putUnsignedVarInt(count($this->requestChangedSlots));
-				foreach($this->requestChangedSlots as $changedSlots){
-					$changedSlots->write($out);
-				}
+		$out->writeGenericTypeNetworkId($this->requestId);
+		if($this->requestId !== 0){
+			$out->putUnsignedVarInt(count($this->requestChangedSlots));
+			foreach($this->requestChangedSlots as $changedSlots){
+				$changedSlots->write($out);
 			}
 		}
 
