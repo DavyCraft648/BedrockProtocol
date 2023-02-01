@@ -16,18 +16,14 @@ namespace pocketmine\network\mcpe\protocol\types\skin;
 
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use Ramsey\Uuid\Uuid;
-use function sprintf;
 
 class SkinData{
-	private const DEFAULT_RESOURCE_PATCH = '{"geometry":{"default":"%s"}}';
 
 	public const ARM_SIZE_SLIM = "slim";
 	public const ARM_SIZE_WIDE = "wide";
 
-	private string $resourcePatch;
 	private SkinImage $capeImage;
 	private string $fullSkinId;
-	private string $geometryName;
 
 	/**
 	 * @param SkinAnimation[]         $animations
@@ -37,7 +33,7 @@ class SkinData{
 	public function __construct(
 		private string $skinId,
 		private string $playFabId,
-		?string $resourcePatch,
+		private string $resourcePatch,
 		private SkinImage $skinImage,
 		private array $animations = [],
 		SkinImage $capeImage = null,
@@ -54,11 +50,8 @@ class SkinData{
 		private bool $premium = false,
 		private bool $persona = false,
 		private bool $personaCapeOnClassic = false,
-		private bool $isPrimaryUser = true,
-		?string $geometryName = null
+		private bool $isPrimaryUser = true
 	){
-		$this->geometryName = $geometryName ?? "geometry.humanoid.custom";
-		$this->resourcePatch = $resourcePatch ?? sprintf(self::DEFAULT_RESOURCE_PATCH, $this->geometryName);
 		$this->capeImage = $capeImage ?? new SkinImage(0, 0, "");
 		//this has to be unique or the client will do stupid things
 		$this->fullSkinId = $fullSkinId ?? Uuid::uuid4()->toString();
@@ -145,17 +138,6 @@ class SkinData{
 
 	public function isVerified() : bool{
 		return $this->isVerified;
-	}
-
-	public function getGeometryName() : string{
-		return $this->geometryName;
-	}
-
-	/**
-	 * @internal
-	 */
-	public function setSkinId(string $skinId) : void{
-		$this->skinId = $skinId;
 	}
 
 	/**

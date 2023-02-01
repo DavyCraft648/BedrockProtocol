@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types\inventory\stackresponse;
 
-use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use function count;
 
@@ -42,11 +41,7 @@ final class ItemStackResponse{
 	public function getContainerInfos() : array{ return $this->containerInfos; }
 
 	public static function read(PacketSerializer $in) : self{
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-			$result = $in->getByte();
-		}else{
-			$result = $in->getBool() ? self::RESULT_OK : self::RESULT_ERROR;
-		}
+		$result = $in->getByte();
 		$requestId = $in->readGenericTypeNetworkId();
 		$containerInfos = [];
 		for($i = 0, $len = $in->getUnsignedVarInt(); $i < $len; ++$i){
@@ -56,11 +51,7 @@ final class ItemStackResponse{
 	}
 
 	public function write(PacketSerializer $out) : void{
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100) {
-			$out->putByte($this->result);
-		}else{
-			$out->putBool($this->result === self::RESULT_OK);
-		}
+		$out->putByte($this->result);
 		$out->writeGenericTypeNetworkId($this->requestId);
 		$out->putUnsignedVarInt(count($this->containerInfos));
 		foreach($this->containerInfos as $containerInfo){

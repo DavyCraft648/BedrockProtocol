@@ -162,10 +162,6 @@ trait PacketHandlerDefaultImplTrait{
 		return false;
 	}
 
-	public function handleActorFall(ActorFallPacket $packet) : bool{
-		return false;
-	}
-
 	public function handleHurtArmor(HurtArmorPacket $packet) : bool{
 		return false;
 	}

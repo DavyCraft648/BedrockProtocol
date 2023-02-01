@@ -63,28 +63,19 @@ class PlayerListPacket extends DataPacket implements ClientboundPacket{
 				$entry->uuid = $in->getUUID();
 				$entry->actorUniqueId = $in->getActorUniqueId();
 				$entry->username = $in->getString();
-				if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0){
-					$entry->xboxUserId = $in->getString();
-					$entry->platformChatId = $in->getString();
-					$entry->buildPlatform = $in->getLInt();
-					$entry->skinData = $in->getSkin();
-					$entry->isTeacher = $in->getBool();
-					$entry->isHost = $in->getBool();
-				}else{
-					$skinId = $in->getString();
-					$entry->skinData = $in->getSkin();
-					$entry->skinData->setSkinId($skinId);
-
-					$entry->xboxUserId = $in->getString();
-					$entry->platformChatId = $in->getString();
-				}
+				$entry->xboxUserId = $in->getString();
+				$entry->platformChatId = $in->getString();
+				$entry->buildPlatform = $in->getLInt();
+				$entry->skinData = $in->getSkin();
+				$entry->isTeacher = $in->getBool();
+				$entry->isHost = $in->getBool();
 			}else{
 				$entry->uuid = $in->getUUID();
 			}
 
 			$this->entries[$i] = $entry;
 		}
-		if($this->type === self::TYPE_ADD && $in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_14_60){
+		if($this->type === self::TYPE_ADD){
 			for($i = 0; $i < $count; ++$i){
 				$this->entries[$i]->skinData->setVerified($in->getBool());
 			}
@@ -99,25 +90,17 @@ class PlayerListPacket extends DataPacket implements ClientboundPacket{
 				$out->putUUID($entry->uuid);
 				$out->putActorUniqueId($entry->actorUniqueId);
 				$out->putString($entry->username);
-				if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0) {
-					$out->putString($entry->xboxUserId);
-					$out->putString($entry->platformChatId);
-					$out->putLInt($entry->buildPlatform);
-					$out->putSkin($entry->skinData);
-					$out->putBool($entry->isTeacher);
-					$out->putBool($entry->isHost);
-				}else{
-					$out->putString($entry->skinData->getSkinId());
-					$out->putSkin($entry->skinData);
-
-					$out->putString($entry->xboxUserId);
-					$out->putString($entry->platformChatId);
-				}
+				$out->putString($entry->xboxUserId);
+				$out->putString($entry->platformChatId);
+				$out->putLInt($entry->buildPlatform);
+				$out->putSkin($entry->skinData);
+				$out->putBool($entry->isTeacher);
+				$out->putBool($entry->isHost);
 			}else{
 				$out->putUUID($entry->uuid);
 			}
 		}
-		if($this->type === self::TYPE_ADD && $out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_14_60){
+		if($this->type === self::TYPE_ADD){
 			foreach($this->entries as $entry){
 				$out->putBool($entry->skinData->isVerified());
 			}

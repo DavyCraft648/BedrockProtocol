@@ -44,10 +44,7 @@ class MoveActorDeltaPacket extends DataPacket implements ClientboundPacket{
 	 */
 	private function maybeReadCoord(int $flag, PacketSerializer $in) : float{
 		if(($this->flags & $flag) !== 0){
-			if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-				return $in->getLFloat();
-			}
-			return $in->getVarInt();
+			return $in->getLFloat();
 		}
 		return 0;
 	}
@@ -75,11 +72,7 @@ class MoveActorDeltaPacket extends DataPacket implements ClientboundPacket{
 
 	private function maybeWriteCoord(int $flag, float $val, PacketSerializer $out) : void{
 		if(($this->flags & $flag) !== 0){
-			if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_100){
-				$out->putLFloat($val);
-			}else{
-				$out->putVarInt((int) $val);
-			}
+			$out->putLFloat($val);
 		}
 	}
 

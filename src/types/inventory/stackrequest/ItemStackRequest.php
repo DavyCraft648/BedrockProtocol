@@ -87,10 +87,8 @@ final class ItemStackRequest{
 			$actions[] = self::readAction($in, $typeId);
 		}
 		$filterStrings = [];
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_200){
-			for($i = 0, $len = $in->getUnsignedVarInt(); $i < $len; ++$i){
-				$filterStrings[] = $in->getString();
-			}
+		for($i = 0, $len = $in->getUnsignedVarInt(); $i < $len; ++$i){
+			$filterStrings[] = $in->getString();
 		}
 		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_50){
 			$filterStringCause = $in->getLInt();
@@ -111,11 +109,9 @@ final class ItemStackRequest{
 			$out->putByte($typeId);
 			$action->write($out);
 		}
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_200){
-			$out->putUnsignedVarInt(count($this->filterStrings));
-			foreach($this->filterStrings as $string){
-				$out->putString($string);
-			}
+		$out->putUnsignedVarInt(count($this->filterStrings));
+		foreach($this->filterStrings as $string){
+			$out->putString($string);
 		}
 		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_50){
 			$out->putLInt($this->filterStringCause);
