@@ -17,7 +17,6 @@ namespace pocketmine\network\mcpe\protocol;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\types\LevelEvent;
-use pocketmine\network\mcpe\protocol\types\ParticleIds;
 
 class LevelEventPacket extends DataPacket implements ClientboundPacket{
 	public const NETWORK_ID = ProtocolInfo::LEVEL_EVENT_PACKET;
@@ -38,11 +37,7 @@ class LevelEventPacket extends DataPacket implements ClientboundPacket{
 		return $result;
 	}
 
-	public static function standardParticle(int $particleId, int $data, Vector3 $position, int $protocolId) : self{
-		if($protocolId <= ProtocolInfo::PROTOCOL_1_17_0 && $particleId >= ParticleIds::CANDLE_FLAME){
-			--$particleId;
-		}
-
+	public static function standardParticle(int $particleId, int $data, Vector3 $position) : self{
 		return self::create(LevelEvent::ADD_PARTICLE_MASK | $particleId, $data, $position);
 	}
 

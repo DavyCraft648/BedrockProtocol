@@ -73,6 +73,9 @@ final class ClientData{
 	/** @required */
 	public string $LanguageCode;
 
+	/** >= PROTOCOL_1_19_62 */
+	public bool $OverrideSkin;
+
 	/**
 	 * @var ClientDataPersonaSkinPiece[]
 	 * @required
@@ -120,7 +123,7 @@ final class ClientData{
 	/** @required */
 	public string $SkinGeometryData;
 
-	/** >= PROTOCOL_1_17_30 */
+	/** @required */
 	public string $SkinGeometryDataEngineVersion;
 
 	/** @required */

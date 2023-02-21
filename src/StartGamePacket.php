@@ -173,14 +173,12 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 
 		$this->multiplayerCorrelationId = $in->getString();
 		$this->enableNewInventorySystem = $in->getBool();
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_0){
-			$this->serverSoftwareVersion = $in->getString();
-		}
+		$this->serverSoftwareVersion = $in->getString();
 		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_0){
 			$this->playerActorProperties = new CacheableNbt($in->getNbtCompoundRoot());
 			$this->blockPaletteChecksum = $in->getLLong();
 			$this->worldTemplateId = $in->getUUID();
-		}elseif($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_0){
+		}else{
 			$this->blockPaletteChecksum = $in->getLLong();
 		}
 		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_20){
@@ -224,14 +222,12 @@ class StartGamePacket extends DataPacket implements ClientboundPacket{
 
 		$out->putString($this->multiplayerCorrelationId);
 		$out->putBool($this->enableNewInventorySystem);
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_0){
-			$out->putString($this->serverSoftwareVersion);
-		}
+		$out->putString($this->serverSoftwareVersion);
 		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_0){
 			$out->put($this->playerActorProperties->getEncodedNbt());
 			$out->putLLong($this->blockPaletteChecksum);
 			$out->putUUID($this->worldTemplateId);
-		}elseif($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_0){
+		}else{
 			$out->putLLong($this->blockPaletteChecksum);
 		}
 		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_20){

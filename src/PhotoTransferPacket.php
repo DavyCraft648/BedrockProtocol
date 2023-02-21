@@ -54,24 +54,20 @@ class PhotoTransferPacket extends DataPacket implements ClientboundPacket{
 		$this->photoName = $in->getString();
 		$this->photoData = $in->getString();
 		$this->bookId = $in->getString();
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
-			$this->type = $in->getByte();
-			$this->sourceType = $in->getByte();
-			$this->ownerActorUniqueId = $in->getLLong(); //...............
-			$this->newPhotoName = $in->getString();
-		}
+		$this->type = $in->getByte();
+		$this->sourceType = $in->getByte();
+		$this->ownerActorUniqueId = $in->getLLong(); //...............
+		$this->newPhotoName = $in->getString();
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
 		$out->putString($this->photoName);
 		$out->putString($this->photoData);
 		$out->putString($this->bookId);
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
-			$out->putByte($this->type);
-			$out->putByte($this->sourceType);
-			$out->putLLong($this->ownerActorUniqueId);
-			$out->putString($this->newPhotoName);
-		}
+		$out->putByte($this->type);
+		$out->putByte($this->sourceType);
+		$out->putLLong($this->ownerActorUniqueId);
+		$out->putString($this->newPhotoName);
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

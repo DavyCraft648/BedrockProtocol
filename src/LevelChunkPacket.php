@@ -107,7 +107,7 @@ class LevelChunkPacket extends DataPacket implements ClientboundPacket{
 	protected function encodePayload(PacketSerializer $out) : void{
 		$this->chunkPosition->write($out);
 
-		if($this->clientSubChunkRequestsEnabled && $out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_10){
+		if($this->clientSubChunkRequestsEnabled){
 			if($this->subChunkCount === PHP_INT_MAX){
 				$out->putUnsignedVarInt(self::CLIENT_REQUEST_FULL_COLUMN_FAKE_COUNT);
 			}else{

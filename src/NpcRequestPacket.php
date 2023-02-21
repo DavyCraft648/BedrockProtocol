@@ -51,9 +51,7 @@ class NpcRequestPacket extends DataPacket implements ServerboundPacket{
 		$this->requestType = $in->getByte();
 		$this->commandString = $in->getString();
 		$this->actionIndex = $in->getByte();
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_10){
-			$this->sceneName = $in->getString();
-		}
+		$this->sceneName = $in->getString();
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
@@ -61,9 +59,7 @@ class NpcRequestPacket extends DataPacket implements ServerboundPacket{
 		$out->putByte($this->requestType);
 		$out->putString($this->commandString);
 		$out->putByte($this->actionIndex);
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_10){
-			$out->putString($this->sceneName);
-		}
+		$out->putString($this->sceneName);
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

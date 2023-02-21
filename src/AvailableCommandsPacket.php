@@ -190,12 +190,10 @@ class AvailableCommandsPacket extends DataPacket implements ClientboundPacket{
 			$this->softEnums[] = $this->getSoftEnum($in);
 		}
 
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0){
-			$this->initSoftEnumsInCommandData();
+		$this->initSoftEnumsInCommandData();
 
-			for($i = 0, $count = $in->getUnsignedVarInt(); $i < $count; ++$i){
-				$this->enumConstraints[] = $this->getEnumConstraint($enums, $enumValues, $in);
-			}
+		for($i = 0, $count = $in->getUnsignedVarInt(); $i < $count; ++$i){
+			$this->enumConstraints[] = $this->getEnumConstraint($enums, $enumValues, $in);
 		}
 	}
 
@@ -362,11 +360,7 @@ class AvailableCommandsPacket extends DataPacket implements ClientboundPacket{
 	protected function getCommandData(array $enums, array $postfixes, PacketSerializer $in) : CommandData{
 		$name = $in->getString();
 		$description = $in->getString();
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_10){
-			$flags = $in->getLShort();
-		}else{
-			$flags = $in->getByte();
-		}
+		$flags = $in->getLShort();
 		$permission = $in->getByte();
 		$aliases = $enums[$in->getLInt()] ?? null;
 		$overloads = [];
@@ -411,11 +405,7 @@ class AvailableCommandsPacket extends DataPacket implements ClientboundPacket{
 	protected function putCommandData(CommandData $data, array $enumIndexes, array $softEnumIndexes, array $postfixIndexes, PacketSerializer $out) : void{
 		$out->putString($data->name);
 		$out->putString($data->description);
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_10){
-			$out->putLShort($data->flags);
-		}else{
-			$out->putByte($data->flags);
-		}
+		$out->putLShort($data->flags);
 		$out->putByte($data->permission);
 
 		if($data->aliases !== null){
@@ -536,11 +526,9 @@ class AvailableCommandsPacket extends DataPacket implements ClientboundPacket{
 			$this->putSoftEnum($enum, $out);
 		}
 
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0){
-			$out->putUnsignedVarInt(count($this->enumConstraints));
-			foreach($this->enumConstraints as $constraint){
-				$this->putEnumConstraint($constraint, $enumIndexes, $enumValueIndexes, $out);
-			}
+		$out->putUnsignedVarInt(count($this->enumConstraints));
+		foreach($this->enumConstraints as $constraint){
+			$this->putEnumConstraint($constraint, $enumIndexes, $enumValueIndexes, $out);
 		}
 	}
 

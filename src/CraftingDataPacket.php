@@ -96,18 +96,16 @@ class CraftingDataPacket extends DataPacket implements ClientboundPacket{
 			$output = $in->getVarInt();
 			$this->potionContainerRecipes[] = new PotionContainerChangeRecipe($input, $ingredient, $output);
 		}
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
-			for($i = 0, $count = $in->getUnsignedVarInt(); $i < $count; ++$i){
-				$inputIdAndData = $in->getVarInt();
-				[$inputId, $inputMeta] = [$inputIdAndData >> 16, $inputIdAndData & 0x7fff];
-				$outputs = [];
-				for($j = 0, $outputCount = $in->getUnsignedVarInt(); $j < $outputCount; ++$j){
-					$outputItemId = $in->getVarInt();
-					$outputItemCount = $in->getVarInt();
-					$outputs[] = new MaterialReducerRecipeOutput($outputItemId, $outputItemCount);
-				}
-				$this->materialReducerRecipes[] = new MaterialReducerRecipe($inputId, $inputMeta, $outputs);
+		for($i = 0, $count = $in->getUnsignedVarInt(); $i < $count; ++$i){
+			$inputIdAndData = $in->getVarInt();
+			[$inputId, $inputMeta] = [$inputIdAndData >> 16, $inputIdAndData & 0x7fff];
+			$outputs = [];
+			for($j = 0, $outputCount = $in->getUnsignedVarInt(); $j < $outputCount; ++$j){
+				$outputItemId = $in->getVarInt();
+				$outputItemCount = $in->getVarInt();
+				$outputs[] = new MaterialReducerRecipeOutput($outputItemId, $outputItemCount);
 			}
+			$this->materialReducerRecipes[] = new MaterialReducerRecipe($inputId, $inputMeta, $outputs);
 		}
 		$this->cleanRecipes = $in->getBool();
 	}
@@ -133,15 +131,13 @@ class CraftingDataPacket extends DataPacket implements ClientboundPacket{
 			$out->putVarInt($recipe->getIngredientItemId());
 			$out->putVarInt($recipe->getOutputItemId());
 		}
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
-			$out->putUnsignedVarInt(count($this->materialReducerRecipes));
-			foreach($this->materialReducerRecipes as $recipe){
-				$out->putVarInt(($recipe->getInputItemId() << 16) | $recipe->getInputItemMeta());
-				$out->putUnsignedVarInt(count($recipe->getOutputs()));
-				foreach($recipe->getOutputs() as $output){
-					$out->putVarInt($output->getItemId());
-					$out->putVarInt($output->getCount());
-				}
+		$out->putUnsignedVarInt(count($this->materialReducerRecipes));
+		foreach($this->materialReducerRecipes as $recipe){
+			$out->putVarInt(($recipe->getInputItemId() << 16) | $recipe->getInputItemMeta());
+			$out->putUnsignedVarInt(count($recipe->getOutputs()));
+			foreach($recipe->getOutputs() as $output){
+				$out->putVarInt($output->getItemId());
+				$out->putVarInt($output->getCount());
 			}
 		}
 		$out->putBool($this->cleanRecipes);

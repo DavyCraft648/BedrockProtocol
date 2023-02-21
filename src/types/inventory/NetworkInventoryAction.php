@@ -113,7 +113,6 @@ class NetworkInventoryAction{
 				$packet->putVarInt($this->windowId);
 				break;
 			default:
-				/** @phpstan-ignore-next-line */
 				throw new \InvalidArgumentException("Unknown inventory action source type $this->sourceType");
 		}
 

@@ -81,9 +81,6 @@ final class ItemStackRequest{
 		$actions = [];
 		for($i = 0, $len = $in->getUnsignedVarInt(); $i < $len; ++$i){
 			$typeId = $in->getByte();
-			if($typeId >= ItemStackRequestActionType::PLACE_INTO_BUNDLE && $in->getProtocolId() < ProtocolInfo::PROTOCOL_1_18_10){
-				$typeId += ItemStackRequestActionType::LAB_TABLE_COMBINE - ItemStackRequestActionType::PLACE_INTO_BUNDLE;
-			}
 			$actions[] = self::readAction($in, $typeId);
 		}
 		$filterStrings = [];
@@ -92,21 +89,15 @@ final class ItemStackRequest{
 		}
 		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_50){
 			$filterStringCause = $in->getLInt();
-		}else{
-			$filterStringCause = 0;
 		}
-		return new self($requestId, $actions, $filterStrings, $filterStringCause);
+		return new self($requestId, $actions, $filterStrings, $filterStringCause ?? 0);
 	}
 
 	public function write(PacketSerializer $out) : void{
 		$out->writeGenericTypeNetworkId($this->requestId);
 		$out->putUnsignedVarInt(count($this->actions));
 		foreach($this->actions as $action){
-			$typeId = $action->getTypeId();
-			if($typeId >= ItemStackRequestActionType::PLACE_INTO_BUNDLE && $out->getProtocolId() < ProtocolInfo::PROTOCOL_1_18_10){
-				$typeId -= ItemStackRequestActionType::LAB_TABLE_COMBINE - ItemStackRequestActionType::PLACE_INTO_BUNDLE;
-			}
-			$out->putByte($typeId);
+			$out->putByte($action->getTypeId());
 			$action->write($out);
 		}
 		$out->putUnsignedVarInt(count($this->filterStrings));

@@ -77,35 +77,27 @@ class AddVolumeEntityPacket extends DataPacket implements ClientboundPacket{
 	protected function decodePayload(PacketSerializer $in) : void{
 		$this->entityNetId = $in->getUnsignedVarInt();
 		$this->data = new CacheableNbt($in->getNbtCompoundRoot());
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
-			if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_10){
-				$this->jsonIdentifier = $in->getString();
-				$this->instanceName = $in->getString();
-				if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_30){
-					$this->minBound = $in->getBlockPosition();
-					$this->maxBound = $in->getBlockPosition();
-					$this->dimension = $in->getVarInt();
-				}
-			}
-			$this->engineVersion = $in->getString();
+		$this->jsonIdentifier = $in->getString();
+		$this->instanceName = $in->getString();
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_30){
+			$this->minBound = $in->getBlockPosition();
+			$this->maxBound = $in->getBlockPosition();
+			$this->dimension = $in->getVarInt();
 		}
+		$this->engineVersion = $in->getString();
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
 		$out->putUnsignedVarInt($this->entityNetId);
 		$out->put($this->data->getEncodedNbt());
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
-			if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_10){
-				$out->putString($this->jsonIdentifier);
-				$out->putString($this->instanceName);
-				if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_30){
-					$out->putBlockPosition($this->minBound);
-					$out->putBlockPosition($this->maxBound);
-					$out->putVarInt($this->dimension);
-				}
-			}
-			$out->putString($this->engineVersion);
+		$out->putString($this->jsonIdentifier);
+		$out->putString($this->instanceName);
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_30){
+			$out->putBlockPosition($this->minBound);
+			$out->putBlockPosition($this->maxBound);
+			$out->putVarInt($this->dimension);
 		}
+		$out->putString($this->engineVersion);
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

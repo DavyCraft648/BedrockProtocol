@@ -67,26 +67,23 @@ use function substr;
 
 class PacketSerializer extends BinaryStream{
 
-	private ?int $protocolId = null;
+	private int $protocolId;
 	private int $shieldItemRuntimeId;
 	private PacketSerializerContext $context;
 
-	protected function __construct(PacketSerializerContext $context, string $buffer = "", int $offset = 0){
+	protected function __construct(PacketSerializerContext $context, int $protocolId, string $buffer = "", int $offset = 0){
 		parent::__construct($buffer, $offset);
 		$this->context = $context;
+		$this->protocolId = $protocolId;
 		$this->shieldItemRuntimeId = $context->getItemDictionary()->fromStringId("minecraft:shield");
 	}
 
-	public static function encoder(PacketSerializerContext $context) : self{
-		return new self($context);
+	public static function encoder(PacketSerializerContext $context, int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : self{
+		return new self($context, $protocolId);
 	}
 
-	public static function decoder(string $buffer, int $offset, PacketSerializerContext $context) : self{
-		return new self($context, $buffer, $offset);
-	}
-
-	public function setProtocolId(?int $protocolId) : void{
-		$this->protocolId = $protocolId;
+	public static function decoder(string $buffer, int $offset, PacketSerializerContext $context, int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : self{
+		return new self($context, $protocolId, $buffer, $offset);
 	}
 
 	public function getProtocolId() : int{
@@ -137,15 +134,8 @@ class PacketSerializer extends BinaryStream{
 		}
 		$capeData = $this->getSkinImage();
 		$geometryData = $this->getString();
-		if($p_1_17_30 = ($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30)){
-			$geometryDataVersion = $this->getString();
-		}
+		$geometryDataVersion = $this->getString();
 		$animationData = $this->getString();
-		if(!$p_1_17_30){
-			$premium = $this->getBool();
-			$persona = $this->getBool();
-			$capeOnClassic = $this->getBool();
-		}
 		$capeId = $this->getString();
 		$fullSkinId = $this->getString();
 		$armSize = $this->getString();
@@ -175,11 +165,12 @@ class PacketSerializer extends BinaryStream{
 			);
 		}
 
-		if($p_1_17_30){
-			$premium = $this->getBool();
-			$persona = $this->getBool();
-			$capeOnClassic = $this->getBool();
-			$isPrimaryUser = $this->getBool();
+		$premium = $this->getBool();
+		$persona = $this->getBool();
+		$capeOnClassic = $this->getBool();
+		$isPrimaryUser = $this->getBool();
+		if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_62){
+			$override = $this->getBool();
 		}
 
 		return new SkinData(
@@ -190,7 +181,7 @@ class PacketSerializer extends BinaryStream{
 			$animations,
 			$capeData,
 			$geometryData,
-			$geometryDataVersion ?? ProtocolInfo::MINECRAFT_VERSION_NETWORK,
+			$geometryDataVersion,
 			$animationData,
 			$capeId,
 			$fullSkinId,
@@ -202,7 +193,8 @@ class PacketSerializer extends BinaryStream{
 			$premium,
 			$persona,
 			$capeOnClassic,
-			$isPrimaryUser ?? true,
+			$isPrimaryUser,
+			$override ?? true
 		);
 	}
 
@@ -220,15 +212,8 @@ class PacketSerializer extends BinaryStream{
 		}
 		$this->putSkinImage($skin->getCapeImage());
 		$this->putString($skin->getGeometryData());
-		if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
-			$this->putString($skin->getGeometryDataEngineVersion());
-		}
+		$this->putString($skin->getGeometryDataEngineVersion());
 		$this->putString($skin->getAnimationData());
-		if($this->getProtocolId() <= ProtocolInfo::PROTOCOL_1_17_10){
-			$this->putBool($skin->isPremium());
-			$this->putBool($skin->isPersona());
-			$this->putBool($skin->isPersonaCapeOnClassic());
-		}
 		$this->putString($skin->getCapeId());
 		$this->putString($skin->getFullSkinId());
 		$this->putString($skin->getArmSize());
@@ -249,11 +234,12 @@ class PacketSerializer extends BinaryStream{
 				$this->putString($color);
 			}
 		}
-		if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
-			$this->putBool($skin->isPremium());
-			$this->putBool($skin->isPersona());
-			$this->putBool($skin->isPersonaCapeOnClassic());
-			$this->putBool($skin->isPrimaryUser());
+		$this->putBool($skin->isPremium());
+		$this->putBool($skin->isPersona());
+		$this->putBool($skin->isPersonaCapeOnClassic());
+		$this->putBool($skin->isPrimaryUser());
+		if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_62){
+			$this->putBool($skin->isOverride());
 		}
 	}
 
@@ -308,7 +294,7 @@ class PacketSerializer extends BinaryStream{
 		$readExtraCrapInTheMiddle($this);
 
 		$blockRuntimeId = $this->getVarInt();
-		$extraData = self::decoder($this->getString(), 0, $this->context);
+		$extraData = self::decoder($this->getString(), 0, $this->context, $this->getProtocolId());
 		return (static function() use ($extraData, $id, $meta, $count, $blockRuntimeId) : ItemStack{
 			$nbtLen = $extraData->getLShort();
 
@@ -372,8 +358,8 @@ class PacketSerializer extends BinaryStream{
 
 		$this->putVarInt($item->getBlockRuntimeId());
 		$context = $this->context;
-		$this->putString((static function() use ($item, $context) : string{
-			$extraData = PacketSerializer::encoder($context);
+		$this->putString((function() use ($item, $context) : string{
+			$extraData = PacketSerializer::encoder($context, $this->getProtocolId());
 
 			$nbt = $item->getNbt();
 			if($nbt !== null){
@@ -485,8 +471,10 @@ class PacketSerializer extends BinaryStream{
 	 * @phpstan-param array<int, MetadataProperty> $metadata
 	 */
 	public function putEntityMetadata(array $metadata) : void{
-		$this->putUnsignedVarInt(count($metadata));
-		foreach(EntityMetadataFlags::encode($metadata, $this->getProtocolId()) as $key => $d){
+		$data = EntityMetadataFlags::encode($metadata, $this->getProtocolId());
+
+		$this->putUnsignedVarInt(count($data));
+		foreach($data as $key => $d){
 			$this->putUnsignedVarInt($key);
 			$this->putUnsignedVarInt($d->getTypeId());
 			$d->write($this);
@@ -681,11 +669,7 @@ class PacketSerializer extends BinaryStream{
 		$rules = [];
 		for($i = 0; $i < $count; ++$i){
 			$name = $this->getString();
-			if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_0){
-				$isPlayerModifiable = $this->getBool();
-			}else{
-				$isPlayerModifiable = false;
-			}
+			$isPlayerModifiable = $this->getBool();
 			$type = $this->getUnsignedVarInt();
 			$rules[$name] = $this->readGameRule($type, $isPlayerModifiable);
 		}
@@ -703,9 +687,7 @@ class PacketSerializer extends BinaryStream{
 		$this->putUnsignedVarInt(count($rules));
 		foreach($rules as $name => $rule){
 			$this->putString($name);
-			if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_0){
-				$this->putBool($rule->isPlayerModifiable());
-			}
+			$this->putBool($rule->isPlayerModifiable());
 			$this->putUnsignedVarInt($rule->getTypeId());
 			$rule->encode($this);
 		}
