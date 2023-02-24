@@ -73,7 +73,7 @@ final class ClientData{
 	/** @required */
 	public string $LanguageCode;
 
-	/** >= PROTOCOL_1_19_62 */
+	/** >= PROTOCOL_1_19_63 */
 	public bool $OverrideSkin;
 
 	/**

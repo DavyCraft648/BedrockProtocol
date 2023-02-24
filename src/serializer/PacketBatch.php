@@ -121,6 +121,7 @@ class PacketBatch{
 	 */
 	public static function fromPackets(int $protocolId, PacketSerializerContext $context, Packet ...$packets) : self{
 		$stream = new BinaryStream();
+		// @phpstan-ignore-next-line
 		self::encodePackets($protocolId, $stream, $context, $packets);
 		return new self($stream->getBuffer());
 	}
