@@ -23,6 +23,10 @@ use function strlen;
 
 class PacketBatch{
 
+	private function __construct(){
+		//NOOP
+	}
+
 	/**
 	 * @phpstan-return \Generator<int, string, void, void>
 	 * @throws PacketDecodeException
@@ -56,13 +60,13 @@ class PacketBatch{
 	 * @phpstan-return \Generator<int, Packet, void, void>
 	 * @throws PacketDecodeException
 	 */
-	final public static function decodePackets(BinaryStream $stream, PacketSerializerContext $context, PacketPool $packetPool) : \Generator{
+	final public static function decodePackets(BinaryStream $stream, PacketPool $packetPool) : \Generator{
 		$c = 0;
 		foreach(self::decodeRaw($stream) as $packetBuffer){
 			$packet = $packetPool->getPacket($packetBuffer);
 			if($packet !== null){
 				try{
-					$packet->decode(PacketSerializer::decoder($packetBuffer, 0, $context));
+					$packet->decode(PacketSerializer::decoder($packetBuffer, 0));
 				}catch(PacketDecodeException $e){
 					throw new PacketDecodeException("Error decoding packet $c in batch: " . $e->getMessage(), 0, $e);
 				}
@@ -78,58 +82,12 @@ class PacketBatch{
 	 * @param Packet[]       $packets
 	 * @phpstan-param list<Packet> $packets
 	 */
-	final public static function encodePackets(BinaryStream $stream, PacketSerializerContext $context, array $packets) : void{
+	final public static function encodePackets(BinaryStream $stream, array $packets) : void{
 		foreach($packets as $packet){
-			$serializer = PacketSerializer::encoder($context);
+			$serializer = PacketSerializer::encoder();
 			$packet->encode($serializer);
 			$stream->putUnsignedVarInt(strlen($serializer->getBuffer()));
 			$stream->put($serializer->getBuffer());
 		}
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public function __construct(
-		private string $buffer
-	){}
-
-	/**
-	 * @deprecated
-	 * @return \Generator|Packet[]|null[]
-	 * @phpstan-return \Generator<int, array{?Packet, string}, void, void>
-	 * @throws PacketDecodeException
-	 */
-	public function getPackets(PacketPool $packetPool, PacketSerializerContext $decoderContext, int $max) : \Generator{
-		$stream = new BinaryStream($this->buffer);
-		$c = 0;
-		try{
-			foreach(self::decodeRaw($stream) as $raw){
-				if(++$c > $max){
-					throw new PacketDecodeException("Reached limit of $max packets in a single batch");
-				}
-				yield $c => [$packetPool->getPacket($raw), $raw];
-			}
-		}catch(BinaryDataException $e){
-			throw new PacketDecodeException("Error decoding packet $c of batch: " . $e->getMessage(), 0, $e);
-		}
-	}
-
-	/**
-	 * @deprecated
-	 * Constructs a packet batch from the given list of packets.
-	 */
-	public static function fromPackets(PacketSerializerContext $context, Packet ...$packets) : self{
-		$stream = new BinaryStream();
-		// @phpstan-ignore-next-line
-		self::encodePackets($stream, $context, $packets);
-		return new self($stream->getBuffer());
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public function getBuffer() : string{
-		return $this->buffer;
 	}
 }

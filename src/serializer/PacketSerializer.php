@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\protocol\serializer;
 
 use pocketmine\math\Vector3;
-use pocketmine\nbt\LittleEndianNbtSerializer;
 use pocketmine\nbt\NbtDataException;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\TreeRoot;
@@ -40,6 +39,7 @@ use pocketmine\network\mcpe\protocol\types\FloatGameRule;
 use pocketmine\network\mcpe\protocol\types\GameRule;
 use pocketmine\network\mcpe\protocol\types\IntGameRule;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
+use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
 use pocketmine\network\mcpe\protocol\types\recipe\ComplexAliasItemDescriptor;
 use pocketmine\network\mcpe\protocol\types\recipe\IntIdMetaItemDescriptor;
 use pocketmine\network\mcpe\protocol\types\recipe\ItemDescriptorType;
@@ -65,22 +65,17 @@ use function strrev;
 use function substr;
 
 class PacketSerializer extends BinaryStream{
-
-	private int $shieldItemRuntimeId;
-	private PacketSerializerContext $context;
-
-	protected function __construct(PacketSerializerContext $context, string $buffer = "", int $offset = 0){
+	protected function __construct(string $buffer = "", int $offset = 0){
+		//overridden to change visibility
 		parent::__construct($buffer, $offset);
-		$this->context = $context;
-		$this->shieldItemRuntimeId = $context->getItemDictionary()->fromStringId("minecraft:shield");
 	}
 
-	public static function encoder(PacketSerializerContext $context) : self{
-		return new self($context);
+	public static function encoder() : self{
+		return new self();
 	}
 
-	public static function decoder(string $buffer, int $offset, PacketSerializerContext $context) : self{
-		return new self($context, $buffer, $offset);
+	public static function decoder(string $buffer, int $offset) : self{
+		return new self($buffer, $offset);
 	}
 
 	public function getProtocolId() : int{
@@ -254,132 +249,89 @@ class PacketSerializer extends BinaryStream{
 	}
 
 	/**
+	 * @return int[]
+	 * @phpstan-return array{0: int, 1: int, 2: int}
 	 * @throws PacketDecodeException
-	 * @throws BinaryDataException
 	 */
-	public function getItemStackWithoutStackId() : ItemStack{
-		return $this->getItemStack(function() : void{
-			//NOOP
-		});
-	}
-
-	public function putItemStackWithoutStackId(ItemStack $item) : void{
-		$this->putItemStack($item, function() : void{
-			//NOOP
-		});
-	}
-
-	/**
-	 * @phpstan-param \Closure(PacketSerializer) : void $readExtraCrapInTheMiddle
-	 *
-	 * @throws PacketDecodeException
-	 * @throws BinaryDataException
-	 */
-	public function getItemStack(\Closure $readExtraCrapInTheMiddle) : ItemStack{
+	private function getItemStackHeader() : array{
 		$id = $this->getVarInt();
 		if($id === 0){
-			return ItemStack::null();
+			return [0, 0, 0];
 		}
 
 		$count = $this->getLShort();
 		$meta = $this->getUnsignedVarInt();
 
-		$readExtraCrapInTheMiddle($this);
+		return [$id, $count, $meta];
+	}
 
+	private function putItemStackHeader(ItemStack $itemStack) : bool{
+		if($itemStack->getId() === 0){
+			$this->putVarInt(0);
+			return false;
+		}
+
+		$this->putVarInt($itemStack->getId());
+		$this->putLShort($itemStack->getCount());
+		$this->putUnsignedVarInt($itemStack->getMeta());
+
+		return true;
+	}
+
+	private function getItemStackFooter(int $id, int $meta, int $count) : ItemStack{
 		$blockRuntimeId = $this->getVarInt();
-		$extraData = self::decoder($this->getString(), 0, $this->context);
-		return (static function() use ($extraData, $id, $meta, $count, $blockRuntimeId) : ItemStack{
-			$nbtLen = $extraData->getLShort();
+		$rawExtraData = $this->getString();
 
-			/** @var CompoundTag|null $compound */
-			$compound = null;
-			if($nbtLen === 0xffff){
-				$nbtDataVersion = $extraData->getByte();
-				if($nbtDataVersion !== 1){
-					throw new PacketDecodeException("Unexpected NBT data version $nbtDataVersion");
-				}
-				$offset = $extraData->getOffset();
-				try{
-					$compound = (new LittleEndianNbtSerializer())->read($extraData->getBuffer(), $offset, 512)->mustGetCompoundTag();
-				}catch(NbtDataException $e){
-					throw PacketDecodeException::wrap($e, "Failed decoding NBT root");
-				}finally{
-					$extraData->setOffset($offset);
-				}
-			}elseif($nbtLen !== 0){
-				throw new PacketDecodeException("Unexpected fake NBT length $nbtLen");
-			}
+		return new ItemStack($id, $meta, $count, $blockRuntimeId, $rawExtraData);
+	}
 
-			$canPlaceOn = [];
-			for($i = 0, $canPlaceOnCount = $extraData->getLInt(); $i < $canPlaceOnCount; ++$i){
-				$canPlaceOn[] = $extraData->get($extraData->getLShort());
-			}
-
-			$canDestroy = [];
-			for($i = 0, $canDestroyCount = $extraData->getLInt(); $i < $canDestroyCount; ++$i){
-				$canDestroy[] = $extraData->get($extraData->getLShort());
-			}
-
-			$shieldBlockingTick = null;
-			if($id === $extraData->shieldItemRuntimeId){
-				$shieldBlockingTick = $extraData->getLLong();
-			}
-
-			if(!$extraData->feof()){
-				throw new PacketDecodeException("Unexpected trailing extradata for network item $id");
-			}
-
-			return new ItemStack($id, $meta, $count, $blockRuntimeId, $compound, $canPlaceOn, $canDestroy, $shieldBlockingTick);
-		})();
+	private function putItemStackFooter(ItemStack $itemStack) : void{
+		$this->putVarInt($itemStack->getBlockRuntimeId());
+		$this->putString($itemStack->getRawExtraData());
 	}
 
 	/**
-	 * @phpstan-param \Closure(PacketSerializer) : void $writeExtraCrapInTheMiddle
+	 * @throws PacketDecodeException
+	 * @throws BinaryDataException
 	 */
-	public function putItemStack(ItemStack $item, \Closure $writeExtraCrapInTheMiddle) : void{
-		if($item->getId() === 0){
-			$this->putVarInt(0);
+	public function getItemStackWithoutStackId() : ItemStack{
+		[$id, $count, $meta] = $this->getItemStackHeader();
 
-			return;
+		return $id !== 0 ? $this->getItemStackFooter($id, $meta, $count) : ItemStack::null();
+
+	}
+
+	public function putItemStackWithoutStackId(ItemStack $itemStack) : void{
+		if($this->putItemStackHeader($itemStack)){
+			$this->putItemStackFooter($itemStack);
+		}
+	}
+
+	public function getItemStackWrapper() : ItemStackWrapper{
+		[$id, $count, $meta] = $this->getItemStackHeader();
+		if($id === 0){
+			return new ItemStackWrapper(0, ItemStack::null());
 		}
 
-		$this->putVarInt($item->getId());
-		$this->putLShort($item->getCount());
-		$this->putUnsignedVarInt($item->getMeta());
+		$hasNetId = $this->getBool();
+		$stackId = $hasNetId ? $this->readServerItemStackId() : 0;
 
-		$writeExtraCrapInTheMiddle($this);
+		$itemStack = $this->getItemStackFooter($id, $meta, $count);
 
-		$this->putVarInt($item->getBlockRuntimeId());
-		$context = $this->context;
-		$this->putString((static function() use ($item, $context) : string{
-			$extraData = PacketSerializer::encoder($context);
+		return new ItemStackWrapper($stackId, $itemStack);
+	}
 
-			$nbt = $item->getNbt();
-			if($nbt !== null){
-				$extraData->putLShort(0xffff);
-				$extraData->putByte(1); //TODO: NBT data version (?)
-				$extraData->put((new LittleEndianNbtSerializer())->write(new TreeRoot($nbt)));
-			}else{
-				$extraData->putLShort(0);
+	public function putItemStackWrapper(ItemStackWrapper $itemStackWrapper) : void{
+		$itemStack = $itemStackWrapper->getItemStack();
+		if($this->putItemStackHeader($itemStack)){
+			$hasNetId = $itemStackWrapper->getStackId() !== 0;
+			$this->putBool($hasNetId);
+			if($hasNetId){
+				$this->writeServerItemStackId($itemStackWrapper->getStackId());
 			}
 
-			$extraData->putLInt(count($item->getCanPlaceOn()));
-			foreach($item->getCanPlaceOn() as $entry){
-				$extraData->putLShort(strlen($entry));
-				$extraData->put($entry);
-			}
-			$extraData->putLInt(count($item->getCanDestroy()));
-			foreach($item->getCanDestroy() as $entry){
-				$extraData->putLShort(strlen($entry));
-				$extraData->put($entry);
-			}
-
-			$blockingTick = $item->getShieldBlockingTick();
-			if($item->getId() === $extraData->shieldItemRuntimeId){
-				$extraData->putLLong($blockingTick ?? 0);
-			}
-			return $extraData->getBuffer();
-		})());
+			$this->putItemStackFooter($itemStack);
+		}
 	}
 
 	public function getRecipeIngredient() : RecipeIngredient{
@@ -805,11 +757,66 @@ class PacketSerializer extends BinaryStream{
 		}
 	}
 
-	public function readGenericTypeNetworkId() : int{
+	public function readRecipeNetId() : int{
+		return $this->getUnsignedVarInt();
+	}
+
+	public function writeRecipeNetId(int $id) : void{
+		$this->putUnsignedVarInt($id);
+	}
+
+	public function readCreativeItemNetId() : int{
+		return $this->getUnsignedVarInt();
+	}
+
+	public function writeCreativeItemNetId(int $id) : void{
+		$this->putUnsignedVarInt($id);
+	}
+
+	/**
+	 * This is a union of ItemStackRequestId, LegacyItemStackRequestId, and ServerItemStackId, used in serverbound
+	 * packets to allow the client to refer to server known items, or items which may have been modified by a previous
+	 * as-yet unacknowledged request from the client.
+	 *
+	 * - Server itemstack ID is positive
+	 * - InventoryTransaction "legacy" request ID is negative and even
+	 * - ItemStackRequest request ID is negative and odd
+	 * - 0 refers to an empty itemstack (air)
+	 */
+	public function readItemStackNetIdVariant() : int{
 		return $this->getVarInt();
 	}
 
-	public function writeGenericTypeNetworkId(int $id) : void{
+	/**
+	 * This is a union of ItemStackRequestId, LegacyItemStackRequestId, and ServerItemStackId, used in serverbound
+	 * packets to allow the client to refer to server known items, or items which may have been modified by a previous
+	 * as-yet unacknowledged request from the client.
+	 */
+	public function writeItemStackNetIdVariant(int $id) : void{
+		$this->putVarInt($id);
+	}
+
+	public function readItemStackRequestId() : int{
+		return $this->getVarInt();
+	}
+
+	public function writeItemStackRequestId(int $id) : void{
+		$this->putVarInt($id);
+	}
+
+	public function readLegacyItemStackRequestId() : int{
+		return $this->getVarInt();
+	}
+
+	public function writeLegacyItemStackRequestId(int $id) : void{
+		$this->putVarInt($id);
+	}
+
+	public function readServerItemStackId() : int{
+		return $this->getVarInt();
+	}
+
+	public function writeServerItemStackId(int $id) : void{
 		$this->putVarInt($id);
 	}
 
