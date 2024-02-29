@@ -12,17 +12,22 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\protocol\types;
+namespace pocketmine\network\mcpe\protocol\types\hud;
 
-class BossBarColor{
+use pocketmine\network\mcpe\protocol\types\PacketIntEnumTrait;
 
-	public const PINK = 0;
-	public const BLUE = 1;
-	public const RED = 2;
-	public const GREEN = 3;
-	public const YELLOW = 4;
-	public const PURPLE = 5;
-	public const REBECCA_PURPLE = 6;
-	public const WHITE = 7;
+enum HudElement : int{
+	use PacketIntEnumTrait;
 
+	case PAPER_DOLL = 0;
+	case ARMOR = 1;
+	case TOOLTIPS = 2;
+	case TOUCH_CONTROLS = 3;
+	case CROSSHAIR = 4;
+	case HOTBAR = 5;
+	case HEALTH = 6;
+	case XP = 7;
+	case FOOD = 8;
+	case AIR_BUBBLES = 9;
+	case HORSE_HEALTH = 10;
 }

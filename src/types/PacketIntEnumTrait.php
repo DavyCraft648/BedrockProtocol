@@ -14,17 +14,23 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types;
 
+use pocketmine\network\mcpe\protocol\PacketDecodeException;
+
 /**
- * List of supported compression algorithms for compressing packet batches.
+ * Trait for enums serialized in packets. Provides a convenient helper method to read, validate and properly bail on
+ * invalid values.
  */
-final class CompressionAlgorithm{
+trait PacketIntEnumTrait{
 
-	private function __construct(){
-		//NOOP
+	/**
+	 * @throws PacketDecodeException
+	 */
+	public static function fromPacket(int $value) : self{
+		$enum = self::tryFrom($value);
+		if($enum === null){
+			throw new PacketDecodeException("Invalid raw value $value for " . static::class);
+		}
+
+		return $enum;
 	}
-
-	public const ZLIB = 0;
-	public const SNAPPY = 1;
-
-	public const NONE = 255;
 }

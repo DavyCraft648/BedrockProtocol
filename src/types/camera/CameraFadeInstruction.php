@@ -28,7 +28,7 @@ final class CameraFadeInstruction{
 
 	public function getTime() : ?Time{ return $this->time; }
 
-	public function getColor() : ?CameraFadeInstructionColor{ return $this->color; }
+	public function getColor() : ?Color{ return $this->color; }
 
 	public static function read(PacketSerializer $in) : self{
 		$time = $in->readOptional(fn() => Time::read($in));
@@ -44,7 +44,7 @@ final class CameraFadeInstruction{
 		$color = $nbt->getCompoundTag("color") ?? throw new \InvalidArgumentException("Missing color tag");
 		return new self(
 			Time::fromNBT($time),
-			CameraFadeInstructionColor::fromNBT($color),
+			Color::fromNBT($color),
 		);
 	}
 

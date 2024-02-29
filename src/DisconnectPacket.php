@@ -19,13 +19,15 @@ use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 class DisconnectPacket extends DataPacket implements ClientboundPacket, ServerboundPacket{
 	public const NETWORK_ID = ProtocolInfo::DISCONNECT_PACKET;
 
+	public int $reason; //TODO: add constants / enum
 	public ?string $message;
 
 	/**
 	 * @generate-create-func
 	 */
-	public static function create(?string $message) : self{
+	public static function create(int $reason, ?string $message) : self{
 		$result = new self;
+		$result->reason = $reason;
 		$result->message = $message;
 		return $result;
 	}
@@ -35,13 +37,17 @@ class DisconnectPacket extends DataPacket implements ClientboundPacket, Serverbo
 	}
 
 	protected function decodePayload(PacketSerializer $in) : void{
-		$hideDisconnectionScreen = $in->getBool();
-		if(!$hideDisconnectionScreen){
-			$this->message = $in->getString();
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_20_40){
+			$this->reason = $in->getVarInt();
 		}
+		$hideDisconnectionScreen = $in->getBool();
+		$this->message = $hideDisconnectionScreen ? null : $in->getString();
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_20_40){
+			$out->putVarInt($this->reason);
+		}
 		$out->putBool($this->message === null);
 		if($this->message !== null){
 			$out->putString($this->message);

@@ -82,6 +82,10 @@ trait PacketHandlerDefaultImplTrait{
 		return false;
 	}
 
+	public function handleServerPlayerPostMovePosition(ServerPlayerPostMovePositionPacket $packet) : bool{
+		return false;
+	}
+
 	public function handleTakeItemActor(TakeItemActorPacket $packet) : bool{
 		return false;
 	}
@@ -502,14 +506,6 @@ trait PacketHandlerDefaultImplTrait{
 		return false;
 	}
 
-	public function handleAddEntity(AddEntityPacket $packet) : bool{
-		return false;
-	}
-
-	public function handleRemoveEntity(RemoveEntityPacket $packet) : bool{
-		return false;
-	}
-
 	public function handleClientCacheStatus(ClientCacheStatusPacket $packet) : bool{
 		return false;
 	}
@@ -803,6 +799,18 @@ trait PacketHandlerDefaultImplTrait{
 	}
 
 	public function handleRefreshEntitlements(RefreshEntitlementsPacket $packet) : bool{
+		return false;
+	}
+
+	public function handlePlayerToggleCrafterSlotRequest(PlayerToggleCrafterSlotRequestPacket $packet) : bool{
+		return false;
+	}
+
+	public function handleSetPlayerInventoryOptions(SetPlayerInventoryOptionsPacket $packet) : bool{
+		return false;
+	}
+
+	public function handleSetHud(SetHudPacket $packet) : bool{
 		return false;
 	}
 }

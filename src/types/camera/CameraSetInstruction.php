@@ -67,6 +67,8 @@ final class CameraSetInstruction{
 	}
 
 	public static function fromNBT(CompoundTag $nbt) : self{
+		$preset = $nbt->getInt("preset");
+
 		$easeTag = $nbt->getCompoundTag("ease");
 		$ease = $easeTag !== null ? CameraSetInstructionEase::fromNBT($easeTag) : null;
 
@@ -80,11 +82,15 @@ final class CameraSetInstruction{
 		$facingTag = $nbt->getCompoundTag("facing");
 		$facingPosition = $facingTag !== null ? self::parseVec3($facingTag, "facing") : null;
 
+		$default = $nbt->getByte("default", 0) !== 0;
+
 		return new self(
+			$preset,
 			$ease,
 			$cameraPosition,
 			$rotation,
-			$facingPosition
+			$facingPosition,
+			$default
 		);
 	}
 
@@ -99,6 +105,7 @@ final class CameraSetInstruction{
 
 	public function toNBT() : CompoundTag{
 		$nbt = CompoundTag::create();
+		$nbt->setInt("preset", $this->preset);
 
 		if($this->ease !== null){
 			$nbt->setTag("ease", $this->ease->toNBT());
@@ -126,6 +133,10 @@ final class CameraSetInstruction{
 					new FloatTag($this->facingPosition->z),
 				]))
 			);
+		}
+
+		if($this->default !== null){
+			$nbt->setByte("default", $this->default ? 1 : 0);
 		}
 
 		return $nbt;

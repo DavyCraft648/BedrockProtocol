@@ -12,17 +12,15 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\protocol\types;
+namespace pocketmine\network\mcpe\protocol\types\inventory;
 
-class BossBarColor{
+use pocketmine\network\mcpe\protocol\types\PacketIntEnumTrait;
 
-	public const PINK = 0;
-	public const BLUE = 1;
-	public const RED = 2;
-	public const GREEN = 3;
-	public const YELLOW = 4;
-	public const PURPLE = 5;
-	public const REBECCA_PURPLE = 6;
-	public const WHITE = 7;
+enum InventoryRightTab : int{
+	use PacketIntEnumTrait;
 
+	case NONE = 0;
+	case FULL_SCREEN = 1;
+	case CRAFTING = 2;
+	case ARMOR = 3;
 }
