@@ -19,6 +19,7 @@ use pocketmine\nbt\NbtDataException;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\protocol\PacketDecodeException;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\BlockPosition;
 use pocketmine\network\mcpe\protocol\types\BoolGameRule;
 use pocketmine\network\mcpe\protocol\types\command\CommandOriginData;
@@ -65,21 +66,21 @@ use function strrev;
 use function substr;
 
 class PacketSerializer extends BinaryStream{
-	protected function __construct(string $buffer = "", int $offset = 0){
+	protected function __construct(string $buffer = "", int $offset = 0, private int $protocolId = ProtocolInfo::CURRENT_PROTOCOL){
 		//overridden to change visibility
 		parent::__construct($buffer, $offset);
 	}
 
-	public static function encoder() : self{
-		return new self();
+	public static function encoder(int $protocolId) : self{
+		return new self(protocolId: $protocolId);
 	}
 
-	public static function decoder(string $buffer, int $offset) : self{
-		return new self($buffer, $offset);
+	public static function decoder(string $buffer, int $offset, int $protocolId) : self{
+		return new self($buffer, $offset, $protocolId);
 	}
 
 	public function getProtocolId() : int{
-		return $this->context->getProtocolId();
+		return $this->protocolId;
 	}
 
 	/**

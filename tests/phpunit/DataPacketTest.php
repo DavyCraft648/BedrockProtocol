@@ -24,11 +24,11 @@ class DataPacketTest extends TestCase{
 		$pk->senderSubId = 3;
 		$pk->recipientSubId = 2;
 
-		$serializer = PacketSerializer::encoder();
+		$serializer = PacketSerializer::encoder(ProtocolInfo::CURRENT_PROTOCOL);
 		$pk->encode($serializer);
 
 		$pk2 = new TestPacket();
-		$pk2->decode(PacketSerializer::decoder($serializer->getBuffer(), 0));
+		$pk2->decode(PacketSerializer::decoder($serializer->getBuffer(), 0, ProtocolInfo::CURRENT_PROTOCOL));
 		self::assertSame($pk2->senderSubId, 3);
 		self::assertSame($pk2->recipientSubId, 2);
 	}

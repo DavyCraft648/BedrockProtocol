@@ -21,12 +21,12 @@ use function strlen;
 class LoginPacketTest extends TestCase{
 
 	public function testInvalidChainDataJsonHandling() : void{
-		$stream = PacketSerializer::encoder();
+		$stream = PacketSerializer::encoder(ProtocolInfo::CURRENT_PROTOCOL);
 		$stream->putUnsignedVarInt(ProtocolInfo::LOGIN_PACKET);
 		$payload = '{"chain":[]'; //intentionally malformed
 		$stream->putInt(ProtocolInfo::CURRENT_PROTOCOL);
 
-		$stream2 = PacketSerializer::encoder();
+		$stream2 = PacketSerializer::encoder(ProtocolInfo::CURRENT_PROTOCOL);
 		$stream2->putLInt(strlen($payload));
 		$stream2->put($payload);
 		$stream->putString($stream2->getBuffer());
@@ -35,6 +35,6 @@ class LoginPacketTest extends TestCase{
 		self::assertInstanceOf(LoginPacket::class, $pk);
 
 		$this->expectException(PacketDecodeException::class);
-		$pk->decode(PacketSerializer::decoder($stream->getBuffer(), 0)); //bang
+		$pk->decode(PacketSerializer::decoder($stream->getBuffer(), 0, ProtocolInfo::CURRENT_PROTOCOL)); //bang
 	}
 }
