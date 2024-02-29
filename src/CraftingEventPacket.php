@@ -52,12 +52,12 @@ class CraftingEventPacket extends DataPacket implements ServerboundPacket{
 
 		$size = $in->getUnsignedVarInt();
 		for($i = 0; $i < $size and $i < 128; ++$i){
-			$this->input[] = ItemStackWrapper::read($in);
+			$this->input[] = $in->getItemStackWrapper();
 		}
 
 		$size = $in->getUnsignedVarInt();
 		for($i = 0; $i < $size and $i < 128; ++$i){
-			$this->output[] = ItemStackWrapper::read($in);
+			$this->output[] = $in->getItemStackWrapper();
 		}
 	}
 
@@ -68,12 +68,12 @@ class CraftingEventPacket extends DataPacket implements ServerboundPacket{
 
 		$out->putUnsignedVarInt(count($this->input));
 		foreach($this->input as $item){
-			$item->write($out);
+			$out->putItemStackWrapper($item);
 		}
 
 		$out->putUnsignedVarInt(count($this->output));
 		foreach($this->output as $item){
-			$item->write($out);
+			$out->putItemStackWrapper($item);
 		}
 	}
 
