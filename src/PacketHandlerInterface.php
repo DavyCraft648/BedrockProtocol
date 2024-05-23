@@ -154,8 +154,6 @@ interface PacketHandlerInterface{
 
 	public function handleChunkRadiusUpdated(ChunkRadiusUpdatedPacket $packet) : bool;
 
-	public function handleItemFrameDropItem(ItemFrameDropItemPacket $packet) : bool;
-
 	public function handleGameRulesChanged(GameRulesChangedPacket $packet) : bool;
 
 	public function handleCamera(CameraPacket $packet) : bool;
@@ -325,8 +323,6 @@ interface PacketHandlerInterface{
 	public function handleCorrectPlayerMovePrediction(CorrectPlayerMovePredictionPacket $packet) : bool;
 
 	public function handleItemComponent(ItemComponentPacket $packet) : bool;
-
-	public function handleFilterText(FilterTextPacket $packet) : bool;
 
 	public function handleClientboundDebugRenderer(ClientboundDebugRendererPacket $packet) : bool;
 

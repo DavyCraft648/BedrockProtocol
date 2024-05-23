@@ -66,7 +66,7 @@ class PacketBatch{
 			$packet = $packetPool->getPacket($packetBuffer);
 			if($packet !== null){
 				try{
-					$packet->decode(PacketSerializer::decoder($packetBuffer, 0, $protocolId));
+					$packet->decode(PacketSerializer::decoder($protocolId, $packetBuffer, 0));
 				}catch(PacketDecodeException $e){
 					throw new PacketDecodeException("Error decoding packet $c in batch: " . $e->getMessage(), 0, $e);
 				}

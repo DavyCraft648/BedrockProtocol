@@ -294,10 +294,6 @@ trait PacketHandlerDefaultImplTrait{
 		return false;
 	}
 
-	public function handleItemFrameDropItem(ItemFrameDropItemPacket $packet) : bool{
-		return false;
-	}
-
 	public function handleGameRulesChanged(GameRulesChangedPacket $packet) : bool{
 		return false;
 	}
@@ -635,10 +631,6 @@ trait PacketHandlerDefaultImplTrait{
 	}
 
 	public function handleItemComponent(ItemComponentPacket $packet) : bool{
-		return false;
-	}
-
-	public function handleFilterText(FilterTextPacket $packet) : bool{
 		return false;
 	}
 

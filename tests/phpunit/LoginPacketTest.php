@@ -35,6 +35,6 @@ class LoginPacketTest extends TestCase{
 		self::assertInstanceOf(LoginPacket::class, $pk);
 
 		$this->expectException(PacketDecodeException::class);
-		$pk->decode(PacketSerializer::decoder($stream->getBuffer(), 0, ProtocolInfo::CURRENT_PROTOCOL)); //bang
+		$pk->decode(PacketSerializer::decoder(ProtocolInfo::CURRENT_PROTOCOL, $stream->getBuffer(), 0)); //bang
 	}
 }
