@@ -20,25 +20,33 @@ class ContainerClosePacket extends DataPacket implements ClientboundPacket, Serv
 	public const NETWORK_ID = ProtocolInfo::CONTAINER_CLOSE_PACKET;
 
 	public int $windowId;
+	public int $type;
 	public bool $server = false;
 
 	/**
 	 * @generate-create-func
 	 */
-	public static function create(int $windowId, bool $server) : self{
+	public static function create(int $windowId, int $type, bool $server) : self{
 		$result = new self;
 		$result->windowId = $windowId;
+		$result->type = $type;
 		$result->server = $server;
 		return $result;
 	}
 
 	protected function decodePayload(PacketSerializer $in) : void{
 		$this->windowId = $in->getByte();
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_0){
+			$this->type = $in->getByte();
+		}
 		$this->server = $in->getBool();
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
 		$out->putByte($this->windowId);
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_0){
+			$out->putByte($this->type);
+		}
 		$out->putBool($this->server);
 	}
 

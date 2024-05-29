@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types\recipe;
 
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
 use Ramsey\Uuid\UuidInterface;
@@ -32,6 +33,7 @@ final class ShapelessRecipe extends RecipeWithTypeId{
 		private UuidInterface $uuid,
 		private string $blockName,
 		private int $priority,
+		private RecipeUnlockingRequirement $requirement,
 		private int $recipeNetId
 	){
 		parent::__construct($typeId);
@@ -67,6 +69,10 @@ final class ShapelessRecipe extends RecipeWithTypeId{
 		return $this->priority;
 	}
 
+	public function getRequirement() : RecipeUnlockingRequirement{
+		return $this->requirement;
+	}
+
 	public function getRecipeNetId() : int{
 		return $this->recipeNetId;
 	}
@@ -84,9 +90,20 @@ final class ShapelessRecipe extends RecipeWithTypeId{
 		$uuid = $in->getUUID();
 		$block = $in->getString();
 		$priority = $in->getVarInt();
+
+		$requirement = new RecipeUnlockingRequirement(RecipeUnlockingRequirement::UNLOCKING_CONTEXT_NONE, []);
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_0){
+			$context = $in->getByte();
+			if($context === RecipeUnlockingRequirement::UNLOCKING_CONTEXT_NONE){
+				for($i = 0, $resultCount = $in->getUnsignedVarInt(); $i < $resultCount; ++$i){
+					$requirement->addIngredient($in->getRecipeIngredient());
+				}
+			}
+		}
+
 		$recipeNetId = $in->readRecipeNetId();
 
-		return new self($recipeType, $recipeId, $input, $output, $uuid, $block, $priority, $recipeNetId);
+		return new self($recipeType, $recipeId, $input, $output, $uuid, $block, $priority, $requirement, $recipeNetId);
 	}
 
 	public function encode(PacketSerializer $out) : void{
@@ -104,6 +121,15 @@ final class ShapelessRecipe extends RecipeWithTypeId{
 		$out->putUUID($this->uuid);
 		$out->putString($this->blockName);
 		$out->putVarInt($this->priority);
+
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_0){
+			$out->putByte($this->requirement->getContext());
+			$out->putUnsignedVarInt(count($this->requirement->getIngredients()));
+			foreach($this->requirement->getIngredients() as $ingredient){
+				$out->putRecipeIngredient($ingredient);
+			}
+		}
+
 		$out->writeRecipeNetId($this->recipeNetId);
 	}
 }

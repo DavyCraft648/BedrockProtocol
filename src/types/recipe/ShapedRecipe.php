@@ -36,6 +36,7 @@ final class ShapedRecipe extends RecipeWithTypeId{
 		string $blockType, //TODO: rename this
 		private int $priority,
 		private bool $symmetric,
+		private RecipeUnlockingRequirement $requirement,
 		private int $recipeNetId
 	){
 		parent::__construct($typeId);
@@ -94,6 +95,10 @@ final class ShapedRecipe extends RecipeWithTypeId{
 
 	public function isSymmetric() : bool{ return $this->symmetric; }
 
+	public function getRequirement() : RecipeUnlockingRequirement{
+		return $this->requirement;
+	}
+
 	public function getRecipeNetId() : int{
 		return $this->recipeNetId;
 	}
@@ -120,9 +125,19 @@ final class ShapedRecipe extends RecipeWithTypeId{
 			$symmetric = $in->getBool();
 		}
 
+		$requirement = new RecipeUnlockingRequirement(RecipeUnlockingRequirement::UNLOCKING_CONTEXT_NONE, []);
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_0){
+			$context = $in->getByte();
+			if($context === RecipeUnlockingRequirement::UNLOCKING_CONTEXT_NONE){
+				for($i = 0, $resultCount = $in->getUnsignedVarInt(); $i < $resultCount; ++$i){
+					$requirement->addIngredient($in->getRecipeIngredient());
+				}
+			}
+		}
+
 		$recipeNetId = $in->readRecipeNetId();
 
-		return new self($recipeType, $recipeId, $input, $output, $uuid, $block, $priority, $symmetric ?? true, $recipeNetId);
+		return new self($recipeType, $recipeId, $input, $output, $uuid, $block, $priority, $symmetric ?? true, $requirement, $recipeNetId);
 	}
 
 	public function encode(PacketSerializer $out) : void{
@@ -145,6 +160,14 @@ final class ShapedRecipe extends RecipeWithTypeId{
 		$out->putVarInt($this->priority);
 		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_20_80){
 			$out->putBool($this->symmetric);
+		}
+
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_0){
+			$out->putByte($this->requirement->getContext());
+			$out->putUnsignedVarInt(count($this->requirement->getIngredients()));
+			foreach($this->requirement->getIngredients() as $ingredient){
+				$out->putRecipeIngredient($ingredient);
+			}
 		}
 
 		$out->writeRecipeNetId($this->recipeNetId);
