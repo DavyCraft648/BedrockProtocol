@@ -805,4 +805,8 @@ trait PacketHandlerDefaultImplTrait{
 	public function handleSetHud(SetHudPacket $packet) : bool{
 		return false;
 	}
+
+	public function handleAwardAchievement(AwardAchievementPacket $packet) : bool{
+		return false;
+	}
 }

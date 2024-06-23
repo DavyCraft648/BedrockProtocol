@@ -409,4 +409,6 @@ interface PacketHandlerInterface{
 	public function handleSetPlayerInventoryOptions(SetPlayerInventoryOptionsPacket $packet) : bool;
 
 	public function handleSetHud(SetHudPacket $packet) : bool;
+
+	public function handleAwardAchievement(AwardAchievementPacket $packet) : bool;
 }
