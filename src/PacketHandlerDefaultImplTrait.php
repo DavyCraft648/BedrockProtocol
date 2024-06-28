@@ -809,4 +809,16 @@ trait PacketHandlerDefaultImplTrait{
 	public function handleAwardAchievement(AwardAchievementPacket $packet) : bool{
 		return false;
 	}
+
+	public function handleClientboundCloseForm(ClientboundCloseFormPacket $packet) : bool{
+		return false;
+	}
+
+	public function handleJigsawStructureData(JigsawStructureDataPacket $packet) : bool{
+		return false;
+	}
+
+	public function handleServerboundLoadingScreen(ServerboundLoadingScreenPacket $packet) : bool{
+		return false;
+	}
 }

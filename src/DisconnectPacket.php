@@ -21,14 +21,16 @@ class DisconnectPacket extends DataPacket implements ClientboundPacket, Serverbo
 
 	public int $reason; //TODO: add constants / enum
 	public ?string $message;
+	public string $filteredMessage;
 
 	/**
 	 * @generate-create-func
 	 */
-	public static function create(int $reason, ?string $message) : self{
+	public static function create(int $reason, ?string $message, ?string $filteredMessage) : self{
 		$result = new self;
 		$result->reason = $reason;
 		$result->message = $message;
+		$result->filteredMessage = $filteredMessage;
 		return $result;
 	}
 
@@ -40,6 +42,9 @@ class DisconnectPacket extends DataPacket implements ClientboundPacket, Serverbo
 		$this->reason = $in->getVarInt();
 		$hideDisconnectionScreen = $in->getBool();
 		$this->message = $hideDisconnectionScreen ? null : $in->getString();
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_10){
+			$this->filteredMessage = $hideDisconnectionScreen ? "" : $in->getString();
+		}
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
@@ -47,6 +52,9 @@ class DisconnectPacket extends DataPacket implements ClientboundPacket, Serverbo
 		$out->putBool($this->message === null);
 		if($this->message !== null){
 			$out->putString($this->message);
+			if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_10){
+				$out->putString($this->filteredMessage);
+			}
 		}
 	}
 

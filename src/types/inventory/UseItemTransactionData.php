@@ -16,6 +16,7 @@ namespace pocketmine\network\mcpe\protocol\types\inventory;
 
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\types\BlockPosition;
 use pocketmine\network\mcpe\protocol\types\GetTypeIdFromConstTrait;
@@ -37,6 +38,7 @@ class UseItemTransactionData extends TransactionData{
 	private Vector3 $playerPosition;
 	private Vector3 $clickPosition;
 	private int $blockRuntimeId;
+	private bool $predictedResult;
 
 	public function getActionType() : int{
 		return $this->actionType;
@@ -70,6 +72,10 @@ class UseItemTransactionData extends TransactionData{
 		return $this->blockRuntimeId;
 	}
 
+	public function isPredictedResult() : bool{
+		return $this->predictedResult;
+	}
+
 	protected function decodeData(PacketSerializer $stream) : void{
 		$this->actionType = $stream->getUnsignedVarInt();
 		$this->blockPosition = $stream->getBlockPosition();
@@ -79,6 +85,9 @@ class UseItemTransactionData extends TransactionData{
 		$this->playerPosition = $stream->getVector3();
 		$this->clickPosition = $stream->getVector3();
 		$this->blockRuntimeId = $stream->getUnsignedVarInt();
+		if($stream->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_10){
+			$this->predictedResult = $stream->getByte() === 1;
+		}
 	}
 
 	protected function encodeData(PacketSerializer $stream) : void{
@@ -90,12 +99,15 @@ class UseItemTransactionData extends TransactionData{
 		$stream->putVector3($this->playerPosition);
 		$stream->putVector3($this->clickPosition);
 		$stream->putUnsignedVarInt($this->blockRuntimeId);
+		if($stream->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_10){
+			$stream->putByte($this->predictedResult ? 1 : 0);
+		}
 	}
 
 	/**
 	 * @param NetworkInventoryAction[] $actions
 	 */
-	public static function new(array $actions, int $actionType, BlockPosition $blockPosition, int $face, int $hotbarSlot, ItemStackWrapper $itemInHand, Vector3 $playerPosition, Vector3 $clickPosition, int $blockRuntimeId) : self{
+	public static function new(array $actions, int $actionType, BlockPosition $blockPosition, int $face, int $hotbarSlot, ItemStackWrapper $itemInHand, Vector3 $playerPosition, Vector3 $clickPosition, int $blockRuntimeId, bool $predictedResult) : self{
 		$result = new self;
 		$result->actions = $actions;
 		$result->actionType = $actionType;
@@ -106,6 +118,7 @@ class UseItemTransactionData extends TransactionData{
 		$result->playerPosition = $playerPosition;
 		$result->clickPosition = $clickPosition;
 		$result->blockRuntimeId = $blockRuntimeId;
+		$result->predictedResult = $predictedResult;
 		return $result;
 	}
 }

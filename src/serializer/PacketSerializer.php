@@ -19,6 +19,7 @@ use pocketmine\nbt\NbtDataException;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\protocol\PacketDecodeException;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\BlockPosition;
 use pocketmine\network\mcpe\protocol\types\BoolGameRule;
 use pocketmine\network\mcpe\protocol\types\command\CommandOriginData;
@@ -628,7 +629,10 @@ class PacketSerializer extends BinaryStream{
 		$type = $this->getByte();
 		$immediate = $this->getBool();
 		$causedByRider = $this->getBool();
-		return new EntityLink($fromActorUniqueId, $toActorUniqueId, $type, $immediate, $causedByRider);
+		if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_10){
+			$vehicleAngularVelocity = $this->getLFloat();
+		}
+		return new EntityLink($fromActorUniqueId, $toActorUniqueId, $type, $immediate, $causedByRider, $vehicleAngularVelocity ?? null);
 	}
 
 	public function putEntityLink(EntityLink $link) : void{
@@ -637,6 +641,9 @@ class PacketSerializer extends BinaryStream{
 		$this->putByte($link->type);
 		$this->putBool($link->immediate);
 		$this->putBool($link->causedByRider);
+		if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_10){
+			$this->putLFloat($link->vehicleAngularVelocity);
+		}
 	}
 
 	/**

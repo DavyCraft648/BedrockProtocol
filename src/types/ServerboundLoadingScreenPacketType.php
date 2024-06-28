@@ -12,20 +12,12 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\protocol\types\entity;
+namespace pocketmine\network\mcpe\protocol\types;
 
-class EntityLink{
+enum ServerboundLoadingScreenPacketType : int{
+	use PacketIntEnumTrait;
 
-	public const TYPE_REMOVE = 0;
-	public const TYPE_RIDER = 1;
-	public const TYPE_PASSENGER = 2;
-
-	public function __construct(
-		public int $fromActorUniqueId,
-		public int $toActorUniqueId,
-		public int $type,
-		public bool $immediate,
-		public bool $causedByRider,
-		public ?float $vehicleAngularVelocity
-	){}
+	case UNKNOWN = 0;
+	case START_LOADING_SCREEN = 1;
+	case END_LOADING_SCREEN = 2;
 }

@@ -411,4 +411,10 @@ interface PacketHandlerInterface{
 	public function handleSetHud(SetHudPacket $packet) : bool;
 
 	public function handleAwardAchievement(AwardAchievementPacket $packet) : bool;
+
+	public function handleClientboundCloseForm(ClientboundCloseFormPacket $packet) : bool;
+
+	public function handleJigsawStructureData(JigsawStructureDataPacket $packet) : bool;
+
+	public function handleServerboundLoadingScreen(ServerboundLoadingScreenPacket $packet) : bool;
 }
