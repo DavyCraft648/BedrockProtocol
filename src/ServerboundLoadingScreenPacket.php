@@ -21,12 +21,12 @@ class ServerboundLoadingScreenPacket extends DataPacket implements ServerboundPa
 	public const NETWORK_ID = ProtocolInfo::SERVERBOUND_LOADING_SCREEN_PACKET;
 
 	private ServerboundLoadingScreenPacketType $type;
-	private int $loadingScreenId;
+	private ?int $loadingScreenId;
 
 	/**
 	 * @generate-create-func
 	 */
-	public static function create(ServerboundLoadingScreenPacketType $type, int $loadingScreenId) : self{
+	public static function create(ServerboundLoadingScreenPacketType $type, ?int $loadingScreenId) : self{
 		$result = new self;
 		$result->type = $type;
 		$result->loadingScreenId = $loadingScreenId;
@@ -37,7 +37,7 @@ class ServerboundLoadingScreenPacket extends DataPacket implements ServerboundPa
 		return $this->type;
 	}
 
-	public function getLoadingScreenId() : int{
+	public function getLoadingScreenId() : ?int{
 		return $this->loadingScreenId;
 	}
 

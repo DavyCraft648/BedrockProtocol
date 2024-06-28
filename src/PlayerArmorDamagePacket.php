@@ -89,7 +89,7 @@ class PlayerArmorDamagePacket extends DataPacket implements ClientboundPacket{
 			$this->composeFlag($this->chestSlotDamage, self::FLAG_CHEST) |
 			$this->composeFlag($this->legsSlotDamage, self::FLAG_LEGS) |
 			$this->composeFlag($this->feetSlotDamage, self::FLAG_FEET) |
-			$out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_10 ? $this->composeFlag($this->bodySlotDamage, self::FLAG_BODY) : 0
+			($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_10 ? $this->composeFlag($this->bodySlotDamage, self::FLAG_BODY) : 0)
 		);
 
 		$this->maybeWriteDamage($this->headSlotDamage, $out);

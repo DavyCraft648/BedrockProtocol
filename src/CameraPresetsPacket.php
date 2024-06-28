@@ -17,7 +17,6 @@ namespace pocketmine\network\mcpe\protocol;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
-use pocketmine\network\mcpe\protocol\types\CacheableNbt;
 use pocketmine\network\mcpe\protocol\types\camera\CameraPreset;
 use function array_map;
 use function count;

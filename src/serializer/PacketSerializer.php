@@ -632,7 +632,7 @@ class PacketSerializer extends BinaryStream{
 		if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_21_10){
 			$vehicleAngularVelocity = $this->getLFloat();
 		}
-		return new EntityLink($fromActorUniqueId, $toActorUniqueId, $type, $immediate, $causedByRider, $vehicleAngularVelocity ?? null);
+		return new EntityLink($fromActorUniqueId, $toActorUniqueId, $type, $immediate, $causedByRider, $vehicleAngularVelocity ?? 0.0);
 	}
 
 	public function putEntityLink(EntityLink $link) : void{

@@ -26,7 +26,7 @@ class DisconnectPacket extends DataPacket implements ClientboundPacket, Serverbo
 	/**
 	 * @generate-create-func
 	 */
-	public static function create(int $reason, ?string $message, ?string $filteredMessage) : self{
+	public static function create(int $reason, ?string $message, string $filteredMessage) : self{
 		$result = new self;
 		$result->reason = $reason;
 		$result->message = $message;
