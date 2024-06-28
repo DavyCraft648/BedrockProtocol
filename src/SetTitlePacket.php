@@ -49,7 +49,7 @@ class SetTitlePacket extends DataPacket implements ClientboundPacket{
 		int $fadeOutTime,
 		string $xuid,
 		string $platformOnlineId,
-		string $filteredTitleText
+		string $filteredTitleText,
 	) : self{
 		$result = new self;
 		$result->type = $type;
