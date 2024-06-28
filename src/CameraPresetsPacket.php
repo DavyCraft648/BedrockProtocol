@@ -44,13 +44,9 @@ class CameraPresetsPacket extends DataPacket implements ClientboundPacket{
 	public function getPresets() : array{ return $this->presets; }
 
 	protected function decodePayload(PacketSerializer $in) : void{
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_20_30){
-			$this->presets = [];
-			for($i = 0, $count = $in->getUnsignedVarInt(); $i < $count; $i++){
-				$this->presets[] = CameraPreset::read($in);
-			}
-		}else{
-			$this->fromNBT($in->getNbtCompoundRoot());
+		$this->presets = [];
+		for($i = 0, $count = $in->getUnsignedVarInt(); $i < $count; $i++){
+			$this->presets[] = CameraPreset::read($in);
 		}
 	}
 
@@ -68,14 +64,9 @@ class CameraPresetsPacket extends DataPacket implements ClientboundPacket{
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_20_30){
-			$out->putUnsignedVarInt(count($this->presets));
-			foreach($this->presets as $preset){
-				$preset->write($out);
-			}
-		}else{
-			$data = new CacheableNbt($this->toNBT($out->getProtocolId()));
-			$out->put($data->getEncodedNbt());
+		$out->putUnsignedVarInt(count($this->presets));
+		foreach($this->presets as $preset){
+			$preset->write($out);
 		}
 	}
 

@@ -37,17 +37,13 @@ class DisconnectPacket extends DataPacket implements ClientboundPacket, Serverbo
 	}
 
 	protected function decodePayload(PacketSerializer $in) : void{
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_20_40){
-			$this->reason = $in->getVarInt();
-		}
+		$this->reason = $in->getVarInt();
 		$hideDisconnectionScreen = $in->getBool();
 		$this->message = $hideDisconnectionScreen ? null : $in->getString();
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_20_40){
-			$out->putVarInt($this->reason);
-		}
+		$out->putVarInt($this->reason);
 		$out->putBool($this->message === null);
 		if($this->message !== null){
 			$out->putString($this->message);

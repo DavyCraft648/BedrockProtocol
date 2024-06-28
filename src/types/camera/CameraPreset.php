@@ -131,18 +131,16 @@ final class CameraPreset{
 			$nbt->setFloat("rot_y", $this->yaw);
 		}
 
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_20_10){
-			if($this->audioListenerType !== null){
-				$nbt->setString("audio_listener_type", match($this->audioListenerType){
-					self::AUDIO_LISTENER_TYPE_CAMERA => "camera",
-					self::AUDIO_LISTENER_TYPE_PLAYER => "player",
-					default => throw new \InvalidArgumentException("Invalid audio listener type: $this->audioListenerType"),
-				});
-			}
+		if($this->audioListenerType !== null){
+			$nbt->setString("audio_listener_type", match($this->audioListenerType){
+				self::AUDIO_LISTENER_TYPE_CAMERA => "camera",
+				self::AUDIO_LISTENER_TYPE_PLAYER => "player",
+				default => throw new \InvalidArgumentException("Invalid audio listener type: $this->audioListenerType"),
+			});
+		}
 
-			if($this->playerEffects !== null){
-				$nbt->setByte("player_effects", (int) $this->playerEffects);
-			}
+		if($this->playerEffects !== null){
+			$nbt->setByte("player_effects", (int) $this->playerEffects);
 		}
 
 		return $nbt;

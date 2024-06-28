@@ -45,13 +45,9 @@ class CameraInstructionPacket extends DataPacket implements ClientboundPacket{
 	public function getFade() : ?CameraFadeInstruction{ return $this->fade; }
 
 	protected function decodePayload(PacketSerializer $in) : void{
-		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_20_30){
-			$this->set = $in->readOptional(fn() => CameraSetInstruction::read($in));
-			$this->clear = $in->readOptional($in->getBool(...));
-			$this->fade = $in->readOptional(fn() => CameraFadeInstruction::read($in));
-		}else{
-			$this->fromNBT($in->getNbtCompoundRoot());
-		}
+		$this->set = $in->readOptional(fn() => CameraSetInstruction::read($in));
+		$this->clear = $in->readOptional($in->getBool(...));
+		$this->fade = $in->readOptional(fn() => CameraFadeInstruction::read($in));
 	}
 
 	protected function fromNBT(CompoundTag $nbt) : void{
@@ -65,14 +61,9 @@ class CameraInstructionPacket extends DataPacket implements ClientboundPacket{
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
-		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_20_30){
-			$out->writeOptional($this->set, fn(CameraSetInstruction $v) => $v->write($out));
-			$out->writeOptional($this->clear, $out->putBool(...));
-			$out->writeOptional($this->fade, fn(CameraFadeInstruction $v) => $v->write($out));
-		}else{
-			$data = new CacheableNbt($this->toNBT());
-			$out->put($data->getEncodedNbt());
-		}
+		$out->writeOptional($this->set, fn(CameraSetInstruction $v) => $v->write($out));
+		$out->writeOptional($this->clear, $out->putBool(...));
+		$out->writeOptional($this->fade, fn(CameraFadeInstruction $v) => $v->write($out));
 	}
 
 	protected function toNBT() : CompoundTag{
